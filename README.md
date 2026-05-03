@@ -1,6 +1,9 @@
 # 🚀 EVO Web Server Manager
 
-A modern web interface to manage **Assetto Corsa EVO Dedicated Servers** locally or remotely.
+A simple and powerful web interface to manage **Assetto Corsa EVO Dedicated Servers**.
+
+👉 No configuration needed  
+👉 Just run the `.exe` and start your server  
 
 ---
 
@@ -8,14 +11,16 @@ A modern web interface to manage **Assetto Corsa EVO Dedicated Servers** locally
 
 👉 **[Download latest version](https://github.com/mostrotarlo/Assetto-Corsa-EVO-Server-Manager-Remote-Management-Web-Interface-/releases/latest)**
 
-✔ No installation required
-✔ Just run the `.exe`
+✔ No installation required  
+✔ Just run the `.exe`  
+✔ Works locally and remotely  
 
 ---
 
 ## 📸 Preview
 
-![Dashboard](screenshot.png)
+![Dashboard](Screenshot%201.png)
+![Server](Screenshot%202.png)
 
 ---
 
@@ -33,23 +38,24 @@ http://127.0.0.1:5000
 
 ## ✨ Features
 
-* Create and manage multiple EVO dedicated servers
-* Remote web interface
-* Start / stop single server
-* Start / stop all servers
-* Automatic server folder setup
-* Configure:
+- Create and manage multiple EVO dedicated servers  
+- Remote web interface  
+- Start / stop single server  
+- Start / stop all servers  
+- Automatic server folder setup  
 
-  * Tracks
-  * Cars
-  * Weather
-  * Grip
-  * Sessions
-* Auto-generate:
+### Configuration:
+- Tracks  
+- Cars  
+- Weather  
+- Grip  
+- Sessions  
 
-  * `-serverconfig`
-  * `-seasondefinition`
-* Remote access via IP or domain (Caddy supported)
+### Automation:
+- Auto-generate `-serverconfig`  
+- Auto-generate `-seasondefinition`  
+
+✔ Remote access via IP or domain (Caddy supported)
 
 ---
 
@@ -59,35 +65,22 @@ http://127.0.0.1:5000
 yourdomain.com {
     reverse_proxy localhost:5000
 }
-```
-
----
-
-## 🧠 How it works
+🧠 How it works
 
 The application generates encoded configuration strings required by Assetto Corsa EVO:
 
-* `-serverconfig`
-* `-seasondefinition`
+-serverconfig
+-seasondefinition
 
 Then launches the official dedicated server automatically.
 
----
-
-## ⚠️ Requirements (DEV only)
+⚠️ Requirements (DEV only)
 
 If you want to run from source:
 
-```
 pip install -r requirements.txt
 python main.py
-```
-
----
-
-## 📦 Build EXE
-
-```
+📦 Build EXE
 python -m PyInstaller ^
   --noconfirm ^
   --clean ^
@@ -96,48 +89,42 @@ python -m PyInstaller ^
   --name "EVO Web Server Manager" ^
   --add-data "templates;templates" ^
   main.py
-```
-
----
-
-## ❤️ Support
+❤️ Support
 
 If you like the project and want to support development:
 
-💰 [Donate via PayPal](https://www.paypal.com/donate/?business=7AVK9RRTQHSNJ&no_recurring=1&currency_code=EUR)
+💰 Donate via PayPal
 
 Every contribution helps improve the project and add new features 🚀
 
----
-
-## 📬 Contact
+📬 Contact
 
 Discord: mostrotarlo
 
----
-
-## 📜 License
+📜 License
 
 MIT License
 
+👤 Author
+
+Developed by Fabio Lombardi
+
+🔥 Roadmap
+Multi-server dashboard improvements
+Better UI/UX
+Auto-detect EVO installation
+Discord integration
+Server monitoring
+⚠️ Disclaimer
+
+This project is not affiliated with Kunos Simulazioni.
+
+
 ---
 
-## 👤 Author
+👉 Ora fai solo:
 
-Developed by **Fabio Lombardi**
-
----
-
-## 🔥 Roadmap
-
-* Multi-server dashboard improvements
-* Better UI/UX
-* Auto-detect EVO installation
-* Discord integration
-* Server monitoring
-
----
-
-## ⚠️ Disclaimer
-
-This project is **not affiliated with Kunos Simulazioni**.
+```powershell
+git add README.md
+git commit -m "Final README clean"
+git push
