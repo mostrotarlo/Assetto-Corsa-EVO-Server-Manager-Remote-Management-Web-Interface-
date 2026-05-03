@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.spec
+build/
+dist/
+running_servers.json
+servers/*
+!servers/.gitkeep
+.env

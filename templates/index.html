@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EVO Web Server Manager</title>
+  <style>
+    body {
+      margin: 0;
+      background: #121212;
+      color: #eee;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .topbar {
+      height: 54px;
+      background: #202020;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .topbar h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .btn {
+      color: #fff;
+      text-decoration: none;
+      padding: 9px 13px;
+      border-radius: 5px;
+      background: #333;
+      border: 1px solid #555;
+      font-size: 14px;
+    }
+
+    .btn.primary {
+      background: #2f5f9f;
+      border-color: #4b7fcc;
+    }
+
+    .btn.green {
+      background: #2f7a45;
+      border-color: #46a862;
+    }
+
+    .btn.red {
+      background: #843333;
+      border-color: #b54848;
+    }
+
+    .server-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: #1f1f1f;
+      border: 1px solid #3a3a3a;
+      border-radius: 9px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+
+    .server-name {
+      font-size: 19px;
+      font-weight: bold;
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .status {
+      font-size: 12px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid #555;
+    }
+
+    .running {
+      background: #173d24;
+      border-color: #2f8a4c;
+      color: #8dffad;
+    }
+
+    .stopped {
+      background: #3a1b1b;
+      border-color: #884040;
+      color: #ff9b9b;
+    }
+
+    .meta {
+      color: #aaa;
+      font-size: 13px;
+      margin: 6px 0;
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .empty {
+      background: #1f1f1f;
+      border: 1px dashed #555;
+      border-radius: 8px;
+      padding: 28px;
+      text-align: center;
+      color: #aaa;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <h1>EVO Web Server Manager</h1>
+  <div class="top-actions">
+    <a class="btn primary" href="{{ BASE_PATH }}/add">Add Server</a>
+    <a class="btn green" href="{{ BASE_PATH }}/start_all">Start All</a>
+    <a class="btn red" href="{{ BASE_PATH }}/stop_all">Stop All</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="actions">
+    <a class="btn primary" href="{{ BASE_PATH }}/add">Add Server</a>
+    <a class="btn green" href="{{ BASE_PATH }}/start_all">Start All Servers</a>
+    <a class="btn red" href="{{ BASE_PATH }}/stop_all">Stop All Servers</a>
+  </div>
+
+  {% if servers %}
+    <div class="server-grid">
+      {% for s in servers %}
+        <div class="card">
+          <div class="card-head">
+            <a class="server-name" href="{{ BASE_PATH }}/server/{{s.id}}">{{s.name}}</a>
+
+            {% if s.running %}
+              <span class="status running">RUNNING</span>
+            {% else %}
+              <span class="status stopped">STOPPED</span>
+            {% endif %}
+          </div>
+
+          <div class="meta">ID: {{s.id}}</div>
+
+          {% if s.running %}
+            <div class="meta">PID: {{s.pid}}</div>
+          {% else %}
+            <div class="meta">PID: -</div>
+          {% endif %}
+
+          <div class="card-actions">
+            <a class="btn" href="{{ BASE_PATH }}/server/{{s.id}}">Open</a>
+            <a class="btn primary" href="{{ BASE_PATH }}/server/{{s.id}}/settings">Settings</a>
+
+            {% if s.running %}
+              <a class="btn red" href="{{ BASE_PATH }}/server/{{s.id}}/stop?next=dash">Stop</a>
+            {% else %}
+              <a class="btn green" href="{{ BASE_PATH }}/server/{{s.id}}/start?next=dash">Start</a>
+            {% endif %}
+
+            <a class="btn" href="{{ BASE_PATH }}/server/{{s.id}}/command">Command</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty">
+      No servers available. Click <b>Add Server</b> to create your first EVO server.
+    </div>
+  {% endif %}
+
+</div>
+
+</body>
+</html>

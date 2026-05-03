@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ server.name }}</title>
+  <style>
+    body {
+      margin: 0;
+      background: #151515;
+      color: #eee;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .topbar {
+      height: 46px;
+      background: #222;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+    }
+
+    .topbar a {
+      color: #fff;
+      text-decoration: none;
+      background: #333;
+      border: 1px solid #555;
+      padding: 8px 12px;
+      border-radius: 4px;
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 24px auto;
+      background: #202020;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      padding: 22px;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: #151515;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 14px;
+    }
+
+    .label {
+      color: #999;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .value {
+      font-size: 18px;
+      color: #fff;
+      word-break: break-all;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .btn {
+      color: #fff;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 5px;
+      border: 1px solid #555;
+      background: #333;
+    }
+
+    .btn.primary {
+      background: #2f5f9f;
+      border-color: #4b7fcc;
+    }
+
+    .btn.green {
+      background: #2f7a45;
+      border-color: #46a862;
+    }
+
+    .btn.red {
+      background: #843333;
+      border-color: #b54848;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="topbar">
+  <a href="{{ BASE_PATH }}/dash">Dashboard</a>
+  <a href="{{ BASE_PATH }}/server/{{server.id}}/settings">Settings</a>
+</div>
+
+<div class="wrap">
+  <h1>{{ server.name }}</h1>
+
+  <div class="grid">
+    <div class="card">
+      <div class="label">TCP Port</div>
+      <div class="value">{{ server.tcp_port }}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">UDP Port</div>
+      <div class="value">{{ server.udp_port }}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">HTTP Port</div>
+      <div class="value">{{ server.http_port }}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Track</div>
+      <div class="value">{{ server.track }} — {{ server.layout }}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Max Players</div>
+      <div class="value">{{ server.max_players }}</div>
+    </div>
+
+    <div class="card">
+      <div class="label">Results Folder</div>
+      <div class="value">{{ server.results_path }}</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="btn primary" href="{{ BASE_PATH }}/server/{{server.id}}/settings">Settings</a>
+    <a class="btn green" href="{{ BASE_PATH }}/server/{{server.id}}/start">Start Server</a>
+    <a class="btn red" href="{{ BASE_PATH }}/server/{{server.id}}/stop">Stop Server</a>
+    <a class="btn" href="{{ BASE_PATH }}/server/{{server.id}}/command">Copy/View Command</a>
+    <a class="btn" href="{{ BASE_PATH }}/dash">Back</a>
+  </div>
+
+
+</div>
+
+</body>
+</html>

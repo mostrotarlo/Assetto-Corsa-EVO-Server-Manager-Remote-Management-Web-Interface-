@@ -1,0 +1,8 @@
+{
+  "password": "admin",
+  "evo_path": "",
+  "host": "0.0.0.0",
+  "port": 5000,
+  "base_path": "",
+  "public_url": ""
+}

@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EVO Server Settings</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #151515;
+      color: #e8e8e8;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+    }
+
+    .topbar {
+      height: 44px;
+      background: #222;
+      border-bottom: 1px solid #333;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      gap: 12px;
+    }
+
+    .topbar a,
+    .topbar button {
+      background: #333;
+      color: #fff;
+      border: 1px solid #555;
+      padding: 7px 12px;
+      text-decoration: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 300px 1fr 300px;
+      gap: 10px;
+      padding: 10px;
+      height: calc(100vh - 44px);
+    }
+
+    .panel {
+      background: #202020;
+      border: 1px solid #3a3a3a;
+      padding: 10px;
+      overflow: auto;
+    }
+
+    h2 {
+      font-size: 16px;
+      margin: 0 0 10px;
+      color: #fff;
+      border-bottom: 1px solid #444;
+      padding-bottom: 6px;
+    }
+
+    h3 {
+      font-size: 14px;
+      margin: 12px 0 8px;
+      color: #f0f0f0;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      color: #bdbdbd;
+      margin-top: 8px;
+      margin-bottom: 3px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      background: #111;
+      color: #eee;
+      border: 1px solid #555;
+      padding: 6px;
+      border-radius: 2px;
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .checkbox-line {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+      color: #ddd;
+    }
+
+    .server-box {
+      background: #111;
+      border: 1px solid #444;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+
+    .server-selected {
+      background: #2c2c2c;
+      border: 1px solid #666;
+      padding: 8px;
+    }
+
+    .cars-toolbar {
+      display: grid;
+      grid-template-columns: 1fr 120px 120px;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 8px 0;
+      font-size: 12px;
+    }
+
+    .filters label {
+      margin: 0;
+      color: #ddd;
+      background: #151515;
+      border: 1px solid #3d3d3d;
+      padding: 6px;
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .cars-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .cars-table th {
+      background: #111;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      border-bottom: 1px solid #444;
+      padding: 6px;
+      text-align: left;
+    }
+
+    .cars-table td {
+      border-bottom: 1px solid #333;
+      padding: 5px;
+      vertical-align: middle;
+    }
+
+    .cars-table input[type="number"] {
+      padding: 3px;
+      font-size: 12px;
+    }
+
+    .car-name {
+      max-width: 320px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .small-input {
+      width: 70px;
+    }
+
+    .actions {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .actions a,
+    .actions button {
+      display: block;
+      text-align: center;
+      background: #3a3a3a;
+      border: 1px solid #666;
+      color: #fff;
+      padding: 9px;
+      text-decoration: none;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .primary {
+      background: #2f5f9f !important;
+      border-color: #4b7fcc !important;
+    }
+
+    .danger {
+      background: #813030 !important;
+      border-color: #b54848 !important;
+    }
+
+    .muted {
+      color: #999;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+<form method="post" action="{{ BASE_PATH }}/server/{{server.id}}/settings/save">
+
+  <div class="topbar">
+    <a href="{{ BASE_PATH }}/dash">Dashboard</a>
+    <a href="{{ BASE_PATH }}/server/{{server.id}}">Server</a>
+    <button class="primary" type="submit">Save Settings</button>
+    <a href="{{ BASE_PATH }}/server/{{server.id}}/start">Run Server</a>
+    <a href="{{ BASE_PATH }}/server/{{server.id}}/stop">Stop Server</a>
+    <a href="{{ BASE_PATH }}/server/{{server.id}}/command">Copy Command</a>
+  </div>
+
+  <div class="app">
+
+    <!-- LEFT PANEL -->
+    <section class="panel">
+      <h2>Latest servers:</h2>
+
+      <div class="server-box">
+        <div class="server-selected">{{ server.name }}</div>
+      </div>
+
+      <h2>Server Info:</h2>
+
+      <label>Server Name:</label>
+      <input name="name" value="{{ server.name }}">
+
+      <div class="row">
+        <div>
+          <label>TCP Port:</label>
+          <input name="tcp_port" type="number" value="{{ server.tcp_port }}">
+        </div>
+        <div>
+          <label>UDP Port:</label>
+          <input name="udp_port" type="number" value="{{ server.udp_port }}">
+        </div>
+      </div>
+
+      <label>HTTP Port:</label>
+      <input name="http_port" type="number" value="{{ server.http_port }}">
+
+      <label>Server Type:</label>
+      <select name="type">
+        <option value="MultiplayerServerListSessionType_RANKED"
+          {% if server.type == "MultiplayerServerListSessionType_RANKED" %}selected{% endif %}>
+          Ranked
+        </option>
+        <option value="MultiplayerServerListSessionType_UNRANKED"
+          {% if server.type == "MultiplayerServerListSessionType_UNRANKED" %}selected{% endif %}>
+          Unranked
+        </option>
+      </select>
+
+      <label>Max Players:</label>
+      <input name="max_players" type="number" value="{{ server.max_players }}">
+
+      <label class="checkbox-line">
+        <input name="cycle" type="checkbox" {% if server.cycle %}checked{% endif %}>
+        Cycle
+      </label>
+
+      <label>Driver Password:</label>
+      <input name="driver_password" value="{{ server.driver_password }}">
+
+      <label>Spectator Password:</label>
+      <input name="spectator_password" value="{{ server.spectator_password }}">
+
+      <label>Admin Password:</label>
+      <input name="admin_password" value="{{ server.admin_password }}">
+
+      <label>Entry List json path:</label>
+      <input name="entry_list_path" value="{{ server.entry_list_path }}">
+
+      <label>Results save folder:</label>
+      <input name="results_path" value="{{ server.results_path }}">
+
+      <div class="actions">
+        <a href="{{ BASE_PATH }}/server/{{server.id}}/start">Run Server</a>
+        <a href="{{ BASE_PATH }}/server/{{server.id}}/stop" class="danger">Stop Server</a>
+        <a href="{{ BASE_PATH }}/server/{{server.id}}/command">Copy command</a>
+      </div>
+    </section>
+
+    <!-- CENTER PANEL -->
+    <section class="panel">
+      <h2>Event Settings:</h2>
+
+      <div class="row">
+        <div>
+          <label>Type:</label>
+          <select name="game_type" id="gameType">
+            <option value="GameModeType_PRACTICE"
+              {% if server.game_type == "GameModeType_PRACTICE" %}selected{% endif %}>
+              Practice
+            </option>
+            <option value="GameModeType_RACE_WEEKEND"
+              {% if server.game_type == "GameModeType_RACE_WEEKEND" %}selected{% endif %}>
+              Race Weekend
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label>Initial Grip:</label>
+          <select name="initial_grip">
+            <option value="InitialGrip_GREEN" {% if server.initial_grip == "InitialGrip_GREEN" %}selected{% endif %}>Green</option>
+            <option value="InitialGrip_FAST" {% if server.initial_grip == "InitialGrip_FAST" %}selected{% endif %}>Fast</option>
+            <option value="InitialGrip_OPTIMUM" {% if server.initial_grip == "InitialGrip_OPTIMUM" %}selected{% endif %}>Optimum</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Weather Behaviour:</label>
+          <select name="weather_behavior">
+            <option value="GameModeSelectionWeatherBehaviour_STATIC"
+              {% if server.weather_behavior == "GameModeSelectionWeatherBehaviour_STATIC" %}selected{% endif %}>
+              Static
+            </option>
+            <option value="GameModeSelectionWeatherBehaviour_DYNAMIC"
+              {% if server.weather_behavior == "GameModeSelectionWeatherBehaviour_DYNAMIC" %}selected{% endif %}>
+              Dynamic
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label>Weather:</label>
+          <select name="weather">
+            <option value="GameModeSelectionWeatherType_CLEAR" {% if server.weather == "GameModeSelectionWeatherType_CLEAR" %}selected{% endif %}>Clear</option>
+            <option value="GameModeSelectionWeatherType_FEW_CLOUDS" {% if server.weather == "GameModeSelectionWeatherType_FEW_CLOUDS" %}selected{% endif %}>Few Clouds</option>
+            <option value="GameModeSelectionWeatherType_CLOUDY" {% if server.weather == "GameModeSelectionWeatherType_CLOUDY" %}selected{% endif %}>Cloudy</option>
+            <option value="GameModeSelectionWeatherType_RAIN" {% if server.weather == "GameModeSelectionWeatherType_RAIN" %}selected{% endif %}>Rain</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Track:</label>
+      <select name="track_value" id="trackSelect">
+
+        <optgroup label="Practice">
+          {% for e in practice_events %}
+            {% set val = e.track ~ "|" ~ e.layout ~ "|" ~ e.event_name ~ "|" ~ e.track_length %}
+            <option value="{{ val }}"
+              data-type="practice"
+              {% if server.track == e.track and server.layout == e.layout and server.event_name == e.event_name %}selected{% endif %}>
+              {{ e.track }} | {{ e.layout }} | {{ e.event_name }} | {{ e.track_length }}m
+            </option>
+          {% endfor %}
+        </optgroup>
+
+        <optgroup label="Race Weekend">
+          {% for e in race_events %}
+            {% set val = e.track ~ "|" ~ e.layout ~ "|" ~ e.event_name ~ "|" ~ e.track_length %}
+            <option value="{{ val }}"
+              data-type="race"
+              {% if server.track == e.track and server.layout == e.layout and server.event_name == e.event_name %}selected{% endif %}>
+              {{ e.track }} | {{ e.layout }} | {{ e.event_name }} | {{ e.track_length }}m
+            </option>
+          {% endfor %}
+        </optgroup>
+
+      </select>
+
+      <h2 style="margin-top:14px;">Cars:</h2>
+
+      <div class="cars-toolbar">
+        <input id="carSearch" placeholder="Search">
+        <input id="piMin" type="number" step="0.1" placeholder="PI Min">
+        <input id="piMax" type="number" step="0.1" placeholder="PI Max">
+      </div>
+
+      <div class="filters">
+        <label><input type="checkbox" class="filter" data-filter="road"> Road</label>
+        <label><input type="checkbox" class="filter" data-filter="race"> Race</label>
+        <label><input type="checkbox" class="filter" data-filter="track"> Track</label>
+        <label><input type="checkbox" class="filter" data-filter="modern"> Modern</label>
+        <label><input type="checkbox" class="filter" data-filter="vintage"> Vintage</label>
+        <label><input type="checkbox" class="filter" data-filter="ice"> ICE</label>
+        <label><input type="checkbox" class="filter" data-filter="ev"> EV</label>
+        <label><input type="checkbox" class="filter" data-filter="hybrid"> Hybrid</label>
+      </div>
+
+      <label class="checkbox-line">
+        <input type="checkbox" id="showOnlySelected">
+        Show only selected cars
+      </label>
+
+      <label class="checkbox-line">
+        <input type="checkbox" id="selectVisibleCars">
+        Select all visible / filtered cars
+      </label>
+
+      <table class="cars-table" id="carsTable">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Name</th>
+            <th>PI</th>
+            <th>P1</th>
+            <th>P2</th>
+            <th>P3</th>
+            <th>Ballast</th>
+            <th>Restrictor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for car in cars %}
+            {% set selected = car.name in selected_car_names %}
+            {% set selected_data = selected_car_map.get(car.name) %}
+            <tr
+              data-name="{{ car.display_name|lower }}"
+              data-pi="{{ car.performance_indicator }}"
+              data-p1="{{ car.property_1 }}"
+              data-p2="{{ car.property_2 }}"
+              data-p3="{{ car.property_3 }}"
+            >
+              <td>
+                <input
+                  type="checkbox"
+                  name="selected_cars"
+                  value="{{ car.name }}"
+                  {% if selected %}checked{% endif %}
+                >
+              </td>
+
+              <td class="car-name">{{ car.display_name }}</td>
+
+              <td>{{ "%.1f"|format(car.performance_indicator) }}</td>
+              <td>{{ car.property_1 }}</td>
+              <td>{{ car.property_2 }}</td>
+              <td>{{ car.property_3 }}</td>
+
+              <td>
+                <input
+                  class="small-input"
+                  type="number"
+                  step="0.1"
+                  name="ballast_{{ car.name }}"
+                  value="{% if selected_data %}{{ selected_data.ballast }}{% else %}0{% endif %}"
+                >
+              </td>
+
+              <td>
+                <input
+                  class="small-input"
+                  type="number"
+                  step="0.1"
+                  name="restrictor_{{ car.name }}"
+                  value="{% if selected_data %}{{ selected_data.restrictor }}{% else %}0{% endif %}"
+                >
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </section>
+
+    <!-- RIGHT PANEL -->
+    <section class="panel">
+      <h2>Practice:</h2>
+
+      <label>Duration:</label>
+      <input name="practice_length" type="number" value="{{ server.practice_length }}">
+
+      <label>Hour of the day:</label>
+      <input name="practice_hour" type="number" min="0" max="23" value="{{ server.practice_hour }}">
+
+      <label>Minute:</label>
+      <input name="practice_minute" type="number" min="0" max="59" value="{{ server.practice_minute }}">
+
+      <label>Time Multiplier:</label>
+      <input name="time_multiplier" type="number" value="{{ server.time_multiplier }}">
+
+      <label>Max wait to box:</label>
+      <input name="max_wait_to_box" type="number" value="{{ server.max_wait_to_box }}">
+
+      <label>Overtime wait next session:</label>
+      <input name="overtime" type="number" value="{{ server.overtime }}">
+
+      <p class="muted">
+        Values are saved into this server's server.json and used to generate
+        -serverconfig and -seasondefinition.
+      </p>
+    </section>
+
+  </div>
+</form>
+
+<script>
+  const rows = Array.from(document.querySelectorAll("#carsTable tbody tr"));
+  const search = document.getElementById("carSearch");
+  const piMin = document.getElementById("piMin");
+  const piMax = document.getElementById("piMax");
+  const showOnlySelected = document.getElementById("showOnlySelected");
+  const selectVisibleCars = document.getElementById("selectVisibleCars");
+  const filters = Array.from(document.querySelectorAll(".filter"));
+
+  function activeFilters() {
+    return filters
+      .filter(f => f.checked)
+      .map(f => f.dataset.filter);
+  }
+
+  function carMatchesFilter(row, filter) {
+    const p1 = parseInt(row.dataset.p1 || "0");
+    const p2 = parseInt(row.dataset.p2 || "0");
+    const p3 = parseInt(row.dataset.p3 || "0");
+
+    // Approximate mapping based on Kunos properties:
+    if (filter === "race") return p1 === 1 || p1 === 2;
+    if (filter === "track") return p1 === 2;
+    if (filter === "road") return p1 === 0;
+
+    if (filter === "modern") return p2 === 0;
+    if (filter === "vintage") return p2 === 1 || p2 === 2;
+
+    if (filter === "ice") return p3 === 0;
+    if (filter === "ev") return p3 === 1;
+    if (filter === "hybrid") return p3 === 2;
+
+    return true;
+  }
+
+  function applyCarFilters() {
+    const q = (search.value || "").toLowerCase();
+    const min = piMin.value ? parseFloat(piMin.value) : null;
+    const max = piMax.value ? parseFloat(piMax.value) : null;
+    const selectedOnly = showOnlySelected.checked;
+    const active = activeFilters();
+
+    rows.forEach(row => {
+      const name = row.dataset.name || "";
+      const pi = parseFloat(row.dataset.pi || "0");
+      const checkbox = row.querySelector('input[name="selected_cars"]');
+
+      let visible = true;
+
+      if (q && !name.includes(q)) visible = false;
+      if (min !== null && pi < min) visible = false;
+      if (max !== null && pi > max) visible = false;
+      if (selectedOnly && !checkbox.checked) visible = false;
+
+      for (const f of active) {
+        if (!carMatchesFilter(row, f)) {
+          visible = false;
+          break;
+        }
+      }
+
+      row.style.display = visible ? "" : "none";
+    });
+  }
+
+  selectVisibleCars.addEventListener("change", function () {
+    const checked = selectVisibleCars.checked;
+
+    rows.forEach(row => {
+      if (row.style.display !== "none") {
+        const checkbox = row.querySelector('input[name="selected_cars"]');
+        checkbox.checked = checked;
+      }
+    });
+
+  applyCarFilters();
+});
+
+  search.addEventListener("input", applyCarFilters);
+  piMin.addEventListener("input", applyCarFilters);
+  piMax.addEventListener("input", applyCarFilters);
+  showOnlySelected.addEventListener("change", applyCarFilters);
+  filters.forEach(f => f.addEventListener("change", applyCarFilters));
+
+  document.getElementById("gameType").addEventListener("change", function () {
+    // For now the dropdown keeps both groups visible.
+    // Later we can hide practice/race optgroups dynamically.
+  });
+</script>
+
+</body>
+</html>
