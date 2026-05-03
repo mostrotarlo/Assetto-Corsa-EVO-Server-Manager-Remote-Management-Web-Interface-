@@ -229,3 +229,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 >>>>>>> 70da6f3f4fc4ae3fabf1c980dab525628d850bcf
+
+*.exe
+dist/
+build/
