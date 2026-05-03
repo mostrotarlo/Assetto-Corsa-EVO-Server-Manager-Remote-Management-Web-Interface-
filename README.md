@@ -65,22 +65,33 @@ http://127.0.0.1:5000
 yourdomain.com {
     reverse_proxy localhost:5000
 }
-🧠 How it works
+```
+
+---
+
+## 🧠 How it works
 
 The application generates encoded configuration strings required by Assetto Corsa EVO:
 
--serverconfig
--seasondefinition
+- `-serverconfig`
+- `-seasondefinition`
 
 Then launches the official dedicated server automatically.
 
-⚠️ Requirements (DEV only)
+---
 
-If you want to run from source:
+## ⚠️ Requirements (DEV only)
 
+```bash
 pip install -r requirements.txt
 python main.py
-📦 Build EXE
+```
+
+---
+
+## 📦 Build EXE
+
+```bash
 python -m PyInstaller ^
   --noconfirm ^
   --clean ^
@@ -89,42 +100,46 @@ python -m PyInstaller ^
   --name "EVO Web Server Manager" ^
   --add-data "templates;templates" ^
   main.py
-❤️ Support
-
-If you like the project and want to support development:
-
-💰 Donate via PayPal
-
-Every contribution helps improve the project and add new features 🚀
-
-📬 Contact
-
-Discord: mostrotarlo
-
-📜 License
-
-MIT License
-
-👤 Author
-
-Developed by Fabio Lombardi
-
-🔥 Roadmap
-Multi-server dashboard improvements
-Better UI/UX
-Auto-detect EVO installation
-Discord integration
-Server monitoring
-⚠️ Disclaimer
-
-This project is not affiliated with Kunos Simulazioni.
-
+```
 
 ---
 
-👉 Ora fai solo:
+## ❤️ Support
 
-```powershell
-git add README.md
-git commit -m "Final README clean"
-git push
+💰 [Donate via PayPal](https://www.paypal.com/donate/?business=7AVK9RRTQHSNJ&no_recurring=1&currency_code=EUR)
+
+Every contribution helps improve the project and add new features 🚀
+
+---
+
+## 📬 Contact
+
+Discord: `mostrotarlo`
+
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## 👤 Author
+
+Developed by **Fabio Lombardi**
+
+---
+
+## 🔥 Roadmap
+
+- Multi-server dashboard improvements  
+- Better UI/UX  
+- Auto-detect EVO installation  
+- Discord integration  
+- Server monitoring  
+
+---
+
+## ⚠️ Disclaimer
+
+This project is **not affiliated with Kunos Simulazioni**.
