@@ -1,34 +1,137 @@
-# Web EVO Server Manager 🚀
+# 🚀 EVO Web Server Manager
 
-Remote web manager for **Assetto Corsa EVO Dedicated Servers**.
-
-This tool allows communities and private server owners to manage Assetto Corsa EVO dedicated servers from a browser, locally or remotely.
+A modern web interface to manage **Assetto Corsa EVO Dedicated Servers** locally or remotely.
 
 ---
 
-## Features
+## 📥 Download
 
-- Create and manage multiple EVO dedicated servers
-- Remote web interface
-- Start / stop single servers
-- Start / stop all servers
-- Configure server name, ports, passwords and sessions
-- Configure tracks, cars, weather, grip and time settings
-- Auto-generate `-serverconfig` and `-seasondefinition` commands
-- Designed for private servers and communities
+👉 **[Download latest version](https://github.com/TUOUSERNAME/EVO-Web-Server-Manager/releases)**
+
+✔ No installation required
+✔ Just run the `.exe`
 
 ---
 
-## Remote Management
+## 📸 Preview
 
-The app can be exposed remotely using:
+![Dashboard](screenshot.png)
 
-- public IP + port forwarding
-- dynamic DNS
-- reverse proxy such as Caddy
+---
 
-Example:
+## ⚡ Quick Start
 
-```text
-http://YOUR_PUBLIC_IP:5000/evo/
-https://your-domain.com/evo/
+1. Download the `.exe`
+2. Run it
+3. Open your browser:
+
+```
+http://127.0.0.1:5060
+```
+
+4. Login and start managing your servers
+
+---
+
+## ✨ Features
+
+* Create and manage multiple EVO servers
+* Remote web interface
+* Start / stop single server
+* Start / stop all servers
+* Automatic server folder setup
+* Configure:
+
+  * Tracks
+  * Cars
+  * Weather
+  * Grip
+  * Sessions
+* Auto-generate:
+
+  * `-serverconfig`
+  * `-seasondefinition`
+* Remote access via IP or domain (Caddy supported)
+
+---
+
+## 🌐 Remote Access (Caddy example)
+
+```caddy
+yourdomain.com {
+    reverse_proxy localhost:5060
+}
+```
+
+---
+
+## 🧠 How it works
+
+The app generates encoded configuration strings required by EVO:
+
+* `-serverconfig`
+* `-seasondefinition`
+
+Then launches the official dedicated server automatically.
+
+---
+
+## ⚠️ Requirements (DEV only)
+
+If you want to run from source:
+
+```
+pip install -r requirements.txt
+python main.py
+```
+
+---
+
+## 📦 Build EXE
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --name "EVO Server Manager" main.py
+```
+
+---
+
+## ❤️ Support
+
+If you like the project and want to support development:
+
+👉 [PayPal link]
+
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## 👤 Author
+
+Developed by **Fabio Lombardi**
+
+---
+
+## 🔥 Roadmap
+
+* Multi-server dashboard improvements
+* Better UI/UX
+* Auto-detect EVO installation
+* Discord integration
+* Server monitoring
+
+---
+
+## ⚠️ Disclaimer
+
+This project is **not affiliated with Kunos Simulazioni**.
+
+---
+
+## 🌍 Community
+
+Feel free to share feedback, ideas or improvements!
