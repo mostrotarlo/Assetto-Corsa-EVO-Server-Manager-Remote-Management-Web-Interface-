@@ -174,7 +174,7 @@ promo_frame.grid(row=8, column=0, columnspan=3, sticky="we", padx=8, pady=(4, 10
 
 tk.Label(
     promo_frame,
-    text="Discover the WOACC community, online rankings and the EVO Tracker project.",
+    text="WOACC EVO Tracker is an optional separate project available for download.",
     fg="#333"
 ).grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 6))
 
@@ -187,7 +187,7 @@ tk.Button(
 
 tk.Button(
     promo_frame,
-    text="Open WOACC EVO Tracker",
+    text="WOACC EVO Tracker (Example)",
     command=lambda: open_link(WOACC_TRACKER_URL),
     width=24
 ).grid(row=1, column=1, padx=4, pady=4)
