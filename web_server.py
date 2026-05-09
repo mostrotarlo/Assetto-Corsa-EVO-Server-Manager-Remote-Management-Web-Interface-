@@ -191,12 +191,40 @@ def create_default_server(server_id, cfg):
             }
         ],
 
-        "practice_length": 3000,
+        "practice_length": 300,
         "practice_hour": 16,
         "practice_minute": 0,
-        "time_multiplier": 1,
-        "max_wait_to_box": 10,
-        "overtime": 10
+        "practice_time_multiplier": 1,
+        "practice_max_wait_to_box": 10,
+        "practice_overtime": 10,
+
+        "qualify_length": 300,
+        "qualify_hour": 16,
+        "qualify_minute": 0,
+        "qualify_time_multiplier": 1,
+        "qualify_max_wait_to_box": 10,
+        "qualify_overtime": 10,
+
+        "warmup_length": 300,
+        "warmup_hour": 16,
+        "warmup_minute": 0,
+        "warmup_time_multiplier": 1,
+        "warmup_max_wait_to_box": 10,
+        "warmup_overtime": 10,
+
+        "race_length": 300,
+        "race_duration_type": "GameModeSelectionDuration_TIME",
+        "race_hour": 16,
+        "race_minute": 0,
+        "race_time_multiplier": 1,
+        "race_max_wait_to_box": 10,
+        "race_overtime": 10,
+        "min_waiting_for_players": 10,
+        "max_waiting_for_players": 30,
+
+        # Optional full command copied from the official Kunos launcher.
+        # If empty, the manager generates -serverconfig and -seasondefinition normally.
+        "custom_command": ""
     }
 
 
@@ -397,6 +425,7 @@ def save_settings(server_id):
 
     data["entry_list_path"] = request.form.get("entry_list_path", "")
     data["results_path"] = request.form.get("results_path", data.get("results_path", ""))
+    data["custom_command"] = request.form.get("custom_command", "").strip()
 
     data["type"] = request.form.get("type", "MultiplayerServerListSessionType_RANKED")
     data["game_type"] = request.form.get("game_type", "GameModeType_PRACTICE")
@@ -413,12 +442,26 @@ def save_settings(server_id):
             data["event_name"] = parts[2]
             data["track_length"] = int(parts[3])
 
-    data["practice_length"] = int(request.form.get("practice_length", data.get("practice_length", 3000)))
+    # Practice settings
+    data["practice_length"] = int(request.form.get("practice_length", data.get("practice_length", 300)))
     data["practice_hour"] = int(request.form.get("practice_hour", data.get("practice_hour", 16)))
     data["practice_minute"] = int(request.form.get("practice_minute", data.get("practice_minute", 0)))
-    data["time_multiplier"] = int(request.form.get("time_multiplier", data.get("time_multiplier", 1)))
-    data["max_wait_to_box"] = int(request.form.get("max_wait_to_box", data.get("max_wait_to_box", 10)))
-    data["overtime"] = int(request.form.get("overtime", data.get("overtime", 10)))
+    data["practice_time_multiplier"] = int(request.form.get("practice_time_multiplier", data.get("practice_time_multiplier", data.get("time_multiplier", 1))))
+    data["practice_max_wait_to_box"] = int(request.form.get("practice_max_wait_to_box", data.get("practice_max_wait_to_box", data.get("max_wait_to_box", 10))))
+    data["practice_overtime"] = int(request.form.get("practice_overtime", data.get("practice_overtime", data.get("overtime", 10))))
+
+    # Race Weekend settings
+    for prefix in ("qualify", "warmup", "race"):
+        data[f"{prefix}_length"] = int(request.form.get(f"{prefix}_length", data.get(f"{prefix}_length", 300)))
+        data[f"{prefix}_hour"] = int(request.form.get(f"{prefix}_hour", data.get(f"{prefix}_hour", 16)))
+        data[f"{prefix}_minute"] = int(request.form.get(f"{prefix}_minute", data.get(f"{prefix}_minute", 0)))
+        data[f"{prefix}_time_multiplier"] = int(request.form.get(f"{prefix}_time_multiplier", data.get(f"{prefix}_time_multiplier", 1)))
+        data[f"{prefix}_max_wait_to_box"] = int(request.form.get(f"{prefix}_max_wait_to_box", data.get(f"{prefix}_max_wait_to_box", 10)))
+        data[f"{prefix}_overtime"] = int(request.form.get(f"{prefix}_overtime", data.get(f"{prefix}_overtime", 10)))
+
+    data["race_duration_type"] = request.form.get("race_duration_type", data.get("race_duration_type", "GameModeSelectionDuration_TIME"))
+    data["min_waiting_for_players"] = int(request.form.get("min_waiting_for_players", data.get("min_waiting_for_players", 10)))
+    data["max_waiting_for_players"] = int(request.form.get("max_waiting_for_players", data.get("max_waiting_for_players", 30)))
 
     selected_cars = request.form.getlist("selected_cars")
     cars = []
@@ -440,6 +483,33 @@ def save_settings(server_id):
     return redirect(url(f"/server/{server_id}/settings"))
 
 
+
+
+def build_generated_command(server_id, data):
+    serverconfig = encode_evo_payload(build_serverconfig(data))
+    seasondefinition = encode_evo_payload(build_seasondefinition(data))
+    exe = server_exe_path(server_id)
+    return f'"{exe}" -serverconfig {serverconfig} -seasondefinition {seasondefinition}'
+
+
+def build_start_command(server_id, data):
+    """Return the command line used to start the server.
+
+    If custom_command is filled, it is used as an override.
+    The user may paste either:
+    - only Kunos arguments: -serverconfig ... -seasondefinition ...
+    - a full command including AssettoCorsaEVOServer.exe
+    """
+    manual = (data.get("custom_command") or "").strip()
+    manual = " ".join(manual.split())
+
+    if manual:
+        if manual.startswith("-"):
+            return f'"{server_exe_path(server_id)}" {manual}'
+        return manual
+
+    return build_generated_command(server_id, data)
+
 # ============================================================
 # COMMAND
 # ============================================================
@@ -451,14 +521,18 @@ def server_command(server_id):
 
     data = load_server(server_id)
 
-    serverconfig = encode_evo_payload(build_serverconfig(data))
-    seasondefinition = encode_evo_payload(build_seasondefinition(data))
+    generated = build_generated_command(server_id, data)
+    active = build_start_command(server_id, data)
 
-    exe = server_exe_path(server_id)
+    if (data.get("custom_command") or "").strip():
+        return (
+            "<h3>Active command: custom Kunos command override</h3>"
+            f"<pre>{active}</pre>"
+            "<h3>Generated command from manager</h3>"
+            f"<pre>{generated}</pre>"
+        )
 
-    command = f'"{exe}" -serverconfig {serverconfig} -seasondefinition {seasondefinition}'
-
-    return f"<pre>{command}</pre>"
+    return f"<pre>{generated}</pre>"
 
 
 # ============================================================
@@ -480,19 +554,10 @@ def start_server(server_id):
 
     data = load_server(server_id)
 
-    serverconfig = encode_evo_payload(build_serverconfig(data))
-    seasondefinition = encode_evo_payload(build_seasondefinition(data))
-
-    exe = server_exe_path(server_id)
-
-    cmd = [
-        exe,
-        "-serverconfig", serverconfig,
-        "-seasondefinition", seasondefinition
-    ]
+    command_line = build_start_command(server_id, data)
 
     proc = subprocess.Popen(
-        cmd,
+        command_line,
         cwd=server_path(server_id),
         creationflags=CREATE_NO_WINDOW,
         stdout=subprocess.DEVNULL,

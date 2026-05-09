@@ -69,8 +69,10 @@ def start_app(cfg):
     server_thread.start()
 
     local_url = f"http://127.0.0.1:{cfg['port']}{cfg.get('base_path', '') or ''}/"
-    status_var.set(f"Running on {local_url}")
-    webbrowser.open(local_url)
+    open_url = (cfg.get("public_url") or "").strip().rstrip("/") or local_url
+
+    status_var.set(f"Running on {open_url}")
+    webbrowser.open(open_url)
 
 
 root = tk.Tk()

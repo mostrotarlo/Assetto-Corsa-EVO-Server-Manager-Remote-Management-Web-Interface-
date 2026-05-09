@@ -37,7 +37,7 @@
 
     .app {
       display: grid;
-      grid-template-columns: 300px 1fr 300px;
+      grid-template-columns: 300px 1fr 360px;
       gap: 10px;
       padding: 10px;
       height: calc(100vh - 44px);
@@ -73,13 +73,23 @@
     }
 
     input,
-    select {
+    select,
+    textarea {
       width: 100%;
       background: #111;
       color: #eee;
       border: 1px solid #555;
       padding: 6px;
       border-radius: 2px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     input[type="checkbox"] {
@@ -210,6 +220,18 @@
       color: #999;
       font-size: 12px;
     }
+
+    .session-box {
+      border: 1px solid #653030;
+      background: #181818;
+      padding: 9px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+
+    .session-box h2 {
+      border-bottom-color: #7a3030;
+    }
   </style>
 </head>
 
@@ -289,6 +311,11 @@
 
       <label>Results save folder:</label>
       <input name="results_path" value="{{ server.results_path }}">
+
+      <label>Manual Kunos command override:</label>
+      <textarea name="custom_command" placeholder="Optional. Paste the command copied from the official Kunos launcher here. You can paste only: -serverconfig ... -seasondefinition ...
+or the full command including AssettoCorsaEVOServer.exe. If empty, this manager generates the command automatically.">{{ server.custom_command|default('') }}</textarea>
+      <p class="muted">If this field is filled, Start Server uses this command instead of the generated one. Useful if Kunos adds new values before the manager is updated.</p>
 
       <div class="actions">
         <a href="{{ BASE_PATH }}/server/{{server.id}}/start">Run Server</a>
@@ -476,29 +503,96 @@
 
     <!-- RIGHT PANEL -->
     <section class="panel">
-      <h2>Practice:</h2>
+      <div class="session-box">
+        <h2>Practice:</h2>
+        <label>Duration [sec]:</label>
+        <input name="practice_length" type="number" value="{{ server.practice_length|default(300) }}">
+        <div class="row">
+          <div>
+            <label>Hour of the day:</label>
+            <input name="practice_hour" type="number" min="0" max="23" value="{{ server.practice_hour|default(16) }}">
+          </div>
+          <div>
+            <label>Minute:</label>
+            <input name="practice_minute" type="number" min="0" max="59" value="{{ server.practice_minute|default(0) }}">
+          </div>
+        </div>
+        <label>Time Multiplier:</label>
+        <input name="practice_time_multiplier" type="number" value="{{ server.practice_time_multiplier|default(server.time_multiplier|default(1)) }}">
+        <label>Max wait to box [sec]:</label>
+        <input name="practice_max_wait_to_box" type="number" value="{{ server.practice_max_wait_to_box|default(server.max_wait_to_box|default(10)) }}">
+        <label>Overtime wait next session [sec]:</label>
+        <input name="practice_overtime" type="number" value="{{ server.practice_overtime|default(server.overtime|default(10)) }}">
+      </div>
 
-      <label>Duration:</label>
-      <input name="practice_length" type="number" value="{{ server.practice_length }}">
+      <div class="race-weekend-only">
+        <div class="session-box">
+          <h2>Qualify:</h2>
+          <label>Duration [sec]:</label>
+          <input name="qualify_length" type="number" value="{{ server.qualify_length|default(300) }}">
+          <div class="row">
+            <div><label>Hour of the day:</label><input name="qualify_hour" type="number" min="0" max="23" value="{{ server.qualify_hour|default(16) }}"></div>
+            <div><label>Minute:</label><input name="qualify_minute" type="number" min="0" max="59" value="{{ server.qualify_minute|default(0) }}"></div>
+          </div>
+          <label>Time Multiplier:</label>
+          <input name="qualify_time_multiplier" type="number" value="{{ server.qualify_time_multiplier|default(1) }}">
+          <label>Max wait to box [sec]:</label>
+          <input name="qualify_max_wait_to_box" type="number" value="{{ server.qualify_max_wait_to_box|default(10) }}">
+          <label>Overtime wait next session [sec]:</label>
+          <input name="qualify_overtime" type="number" value="{{ server.qualify_overtime|default(10) }}">
+        </div>
 
-      <label>Hour of the day:</label>
-      <input name="practice_hour" type="number" min="0" max="23" value="{{ server.practice_hour }}">
+        <div class="session-box">
+          <h2>Warmup:</h2>
+          <label>Duration [sec]:</label>
+          <input name="warmup_length" type="number" value="{{ server.warmup_length|default(300) }}">
+          <div class="row">
+            <div><label>Hour of the day:</label><input name="warmup_hour" type="number" min="0" max="23" value="{{ server.warmup_hour|default(16) }}"></div>
+            <div><label>Minute:</label><input name="warmup_minute" type="number" min="0" max="59" value="{{ server.warmup_minute|default(0) }}"></div>
+          </div>
+          <label>Time Multiplier:</label>
+          <input name="warmup_time_multiplier" type="number" value="{{ server.warmup_time_multiplier|default(1) }}">
+          <label>Max wait to box [sec]:</label>
+          <input name="warmup_max_wait_to_box" type="number" value="{{ server.warmup_max_wait_to_box|default(10) }}">
+          <label>Overtime wait next session [sec]:</label>
+          <input name="warmup_overtime" type="number" value="{{ server.warmup_overtime|default(10) }}">
+        </div>
 
-      <label>Minute:</label>
-      <input name="practice_minute" type="number" min="0" max="59" value="{{ server.practice_minute }}">
-
-      <label>Time Multiplier:</label>
-      <input name="time_multiplier" type="number" value="{{ server.time_multiplier }}">
-
-      <label>Max wait to box:</label>
-      <input name="max_wait_to_box" type="number" value="{{ server.max_wait_to_box }}">
-
-      <label>Overtime wait next session:</label>
-      <input name="overtime" type="number" value="{{ server.overtime }}">
+        <div class="session-box">
+          <h2>Race:</h2>
+          <label>Duration [sec]:</label>
+          <input name="race_length" type="number" value="{{ server.race_length|default(300) }}">
+          <label>Duration Type:</label>
+          <select name="race_duration_type">
+            <option value="GameModeSelectionDuration_TIME" {% if server.race_duration_type|default('GameModeSelectionDuration_TIME') == 'GameModeSelectionDuration_TIME' %}selected{% endif %}>Time</option>
+            <option value="GameModeSelectionDuration_LAPS" {% if server.race_duration_type|default('GameModeSelectionDuration_TIME') == 'GameModeSelectionDuration_LAPS' %}selected{% endif %}>Laps</option>
+          </select>
+          <div class="row">
+            <div><label>Hour of the day:</label><input name="race_hour" type="number" min="0" max="23" value="{{ server.race_hour|default(16) }}"></div>
+            <div><label>Minute:</label><input name="race_minute" type="number" min="0" max="59" value="{{ server.race_minute|default(0) }}"></div>
+          </div>
+          <label>Time Multiplier:</label>
+          <input name="race_time_multiplier" type="number" value="{{ server.race_time_multiplier|default(1) }}">
+          <label>Max wait to box [sec]:</label>
+          <input name="race_max_wait_to_box" type="number" value="{{ server.race_max_wait_to_box|default(10) }}">
+          <label>Overtime wait next session [sec]:</label>
+          <input name="race_overtime" type="number" value="{{ server.race_overtime|default(10) }}">
+          <div class="row">
+            <div>
+              <label>Min waiting players [sec]:</label>
+              <input name="min_waiting_for_players" type="number" value="{{ server.min_waiting_for_players|default(10) }}">
+            </div>
+            <div>
+              <label>Max waiting players [sec]:</label>
+              <input name="max_waiting_for_players" type="number" value="{{ server.max_waiting_for_players|default(30) }}">
+            </div>
+          </div>
+        </div>
+      </div>
 
       <p class="muted">
-        Values are saved into this server's server.json and used to generate
-        -serverconfig and -seasondefinition.
+        Race Weekend generates Practice + Qualify + Warmup + Race blocks in
+        -seasondefinition, matching the official Kunos launcher structure.
       </p>
     </section>
 
@@ -589,10 +683,15 @@
   showOnlySelected.addEventListener("change", applyCarFilters);
   filters.forEach(f => f.addEventListener("change", applyCarFilters));
 
-  document.getElementById("gameType").addEventListener("change", function () {
-    // For now the dropdown keeps both groups visible.
-    // Later we can hide practice/race optgroups dynamically.
-  });
+  function updateSessionVisibility() {
+    const isWeekend = document.getElementById("gameType").value === "GameModeType_RACE_WEEKEND";
+    document.querySelectorAll(".race-weekend-only").forEach(el => {
+      el.style.display = isWeekend ? "block" : "none";
+    });
+  }
+
+  document.getElementById("gameType").addEventListener("change", updateSessionVisibility);
+  updateSessionVisibility();
 </script>
 
 </body>
