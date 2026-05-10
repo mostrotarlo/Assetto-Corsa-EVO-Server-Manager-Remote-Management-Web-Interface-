@@ -369,13 +369,17 @@ or the full command including AssettoCorsaEVOServer.exe. If empty, this manager 
         </div>
 
         <div>
-          <label>Weather:</label>
-          <select name="weather">
-            <option value="GameModeSelectionWeatherType_CLEAR" {% if server.weather == "GameModeSelectionWeatherType_CLEAR" %}selected{% endif %}>Clear</option>
-            <option value="GameModeSelectionWeatherType_FEW_CLOUDS" {% if server.weather == "GameModeSelectionWeatherType_FEW_CLOUDS" %}selected{% endif %}>Few Clouds</option>
-            <option value="GameModeSelectionWeatherType_CLOUDY" {% if server.weather == "GameModeSelectionWeatherType_CLOUDY" %}selected{% endif %}>Cloudy</option>
-            <option value="GameModeSelectionWeatherType_RAIN" {% if server.weather == "GameModeSelectionWeatherType_RAIN" %}selected{% endif %}>Rain</option>
-          </select>
+        <label>Weather:</label>
+        <select name="weather">
+          <option value="GameModeSelectionWeatherType_CLEAR" {% if server.weather == "GameModeSelectionWeatherType_CLEAR" %}selected{% endif %}>Clear</option>
+          <option value="GameModeSelectionWeatherType_SCATTERED_CLOUDS" {% if server.weather == "GameModeSelectionWeatherType_SCATTERED_CLOUDS" %}selected{% endif %}>Scattered Clouds</option>
+          <option value="GameModeSelectionWeatherType_BROKEN_CLOUDS" {% if server.weather == "GameModeSelectionWeatherType_BROKEN_CLOUDS" %}selected{% endif %}>Broken Clouds</option>
+          <option value="GameModeSelectionWeatherType_OVERCAST" {% if server.weather == "GameModeSelectionWeatherType_OVERCAST" %}selected{% endif %}>Overcast</option>
+          <option value="GameModeSelectionWeatherType_DRIZZLE" {% if server.weather == "GameModeSelectionWeatherType_DRIZZLE" %}selected{% endif %}>Drizzle</option>
+          <option value="GameModeSelectionWeatherType_RAIN" {% if server.weather == "GameModeSelectionWeatherType_RAIN" %}selected{% endif %}>Rain</option>
+          <option value="GameModeSelectionWeatherType_HEAVY_RAIN" {% if server.weather == "GameModeSelectionWeatherType_HEAVY_RAIN" %}selected{% endif %}>Heavy Rain</option>
+          <option value="GameModeSelectionWeatherType_DAMP" {% if server.weather == "GameModeSelectionWeatherType_DAMP" %}selected{% endif %}>Damp</option>
+        </select>
         </div>
       </div>
 
