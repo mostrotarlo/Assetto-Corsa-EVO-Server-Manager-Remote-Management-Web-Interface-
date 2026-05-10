@@ -17,7 +17,7 @@ def app_dir() -> str:
 BASE_DIR = app_dir()
 os.chdir(BASE_DIR)
 
-APP_VERSION = "v1.1.0"
+APP_VERSION = "v1.2.0"
 
 WOACC_URL = "https://woacc.zapto.org/"
 WOACC_TRACKER_URL = "https://woacc.zapto.org/tracker/"
