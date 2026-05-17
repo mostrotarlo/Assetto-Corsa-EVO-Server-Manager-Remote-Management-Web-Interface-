@@ -3,6 +3,7 @@ import os
 import sys
 import threading
 import webbrowser
+import subprocess
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
@@ -17,7 +18,7 @@ def app_dir() -> str:
 BASE_DIR = app_dir()
 os.chdir(BASE_DIR)
 
-APP_VERSION = "v1.2.0"
+APP_VERSION = "v1.3.0"
 
 WOACC_URL = "https://woacc.zapto.org/"
 WOACC_TRACKER_URL = "https://woacc.zapto.org/tracker/"
@@ -33,7 +34,14 @@ DEFAULT_CFG = {
     "host": "0.0.0.0",
     "port": 5000,
     "base_path": "",
-    "public_url": ""
+    "public_url": "",
+    "disable_auth": False,
+    "restore_running_on_startup": False,
+    "watchdog_enabled": False,
+    "watchdog_interval_sec": 30,
+    "watchdog_max_restarts": 3,
+    "watchdog_window_min": 10,
+    "start_with_windows": False
 }
 
 
@@ -60,6 +68,46 @@ def load_cfg():
 
 
 server_thread = None
+
+
+def startup_shortcut_path():
+    startup_dir = os.path.join(
+        os.environ.get("APPDATA", ""),
+        r"Microsoft\Windows\Start Menu\Programs\Startup"
+    )
+    return os.path.join(startup_dir, "EVO Web Server Manager.lnk")
+
+
+def set_start_with_windows(enabled: bool):
+    shortcut = startup_shortcut_path()
+    startup_dir = os.path.dirname(shortcut)
+    os.makedirs(startup_dir, exist_ok=True)
+
+    if not enabled:
+        if os.path.exists(shortcut):
+            os.remove(shortcut)
+        return
+
+    # Create a normal Windows .lnk without requiring administrator permissions.
+    target = sys.executable
+    arguments = "" if getattr(sys, "frozen", False) else '"{}"'.format(os.path.abspath(__file__))
+    workdir = BASE_DIR
+
+    ps = (
+        "$WshShell = New-Object -ComObject WScript.Shell\n"
+        "$Shortcut = $WshShell.CreateShortcut(\"{}\")\n"
+        "$Shortcut.TargetPath = \"{}\"\n"
+        "$Shortcut.Arguments = \"{}\"\n"
+        "$Shortcut.WorkingDirectory = \"{}\"\n"
+        "$Shortcut.Save()\n"
+    ).format(shortcut, target, arguments.replace('"', '`"'), workdir)
+
+    subprocess.run(
+        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
 
 
 def start_app(cfg):
@@ -145,8 +193,21 @@ public_url.insert(0, cfg.get("public_url", ""))
 public_url.grid(row=5, column=1, sticky="w", **pad)
 tk.Label(root, text="Optional. Example: https://woacc.zapto.org/evo").grid(row=5, column=2, sticky="w", **pad)
 
+# Advanced options
+disable_auth_var = tk.BooleanVar(value=bool(cfg.get("disable_auth", False)))
+restore_var = tk.BooleanVar(value=bool(cfg.get("restore_running_on_startup", False)))
+watchdog_var = tk.BooleanVar(value=bool(cfg.get("watchdog_enabled", False)))
+startup_var = tk.BooleanVar(value=bool(cfg.get("start_with_windows", False)))
+
+tk.Checkbutton(root, text="Disable web authentication", variable=disable_auth_var).grid(row=6, column=0, columnspan=2, sticky="w", padx=8, pady=2)
+tk.Label(root, text="Use only with external auth or trusted LAN", fg="#777").grid(row=6, column=2, sticky="w", padx=8, pady=2)
+
+tk.Checkbutton(root, text="Restore previously running servers on startup", variable=restore_var).grid(row=7, column=0, columnspan=2, sticky="w", padx=8, pady=2)
+tk.Checkbutton(root, text="Enable server watchdog", variable=watchdog_var).grid(row=8, column=0, columnspan=2, sticky="w", padx=8, pady=2)
+tk.Checkbutton(root, text="Start EVO Server Manager with Windows", variable=startup_var).grid(row=9, column=0, columnspan=2, sticky="w", padx=8, pady=2)
+
 status_var = tk.StringVar(value="Stopped")
-tk.Label(root, textvariable=status_var, fg="#0a7").grid(row=6, column=0, columnspan=3, sticky="w", **pad)
+tk.Label(root, textvariable=status_var, fg="#0a7").grid(row=10, column=0, columnspan=3, sticky="w", **pad)
 
 
 def go():
@@ -162,15 +223,24 @@ def go():
     cfg2["port"] = 5000
     cfg2["base_path"] = bp
     cfg2["public_url"] = public_url.get().strip()
+    cfg2["disable_auth"] = bool(disable_auth_var.get())
+    cfg2["restore_running_on_startup"] = bool(restore_var.get())
+    cfg2["watchdog_enabled"] = bool(watchdog_var.get())
+    cfg2["start_with_windows"] = bool(startup_var.get())
+
+    try:
+        set_start_with_windows(cfg2["start_with_windows"])
+    except Exception as exc:
+        messagebox.showwarning("Startup shortcut", f"Unable to update Windows startup shortcut:\n{exc}")
 
     start_app(cfg2)
 
 
-tk.Button(root, text="Start Web App", command=go, width=22).grid(row=7, column=1, pady=12)
+tk.Button(root, text="Start Web App", command=go, width=22).grid(row=11, column=1, pady=12)
 
 # WOACC promotion area
 promo_frame = tk.LabelFrame(root, text="WOACC Community & Tools", padx=8, pady=8)
-promo_frame.grid(row=8, column=0, columnspan=3, sticky="we", padx=8, pady=(4, 10))
+promo_frame.grid(row=12, column=0, columnspan=3, sticky="we", padx=8, pady=(4, 10))
 
 tk.Label(
     promo_frame,
@@ -203,6 +273,6 @@ tk.Label(
     root,
     text="Developed for the Assetto Corsa EVO community",
     fg="#777"
-).grid(row=9, column=0, columnspan=3, sticky="w", padx=8, pady=(0, 8))
+).grid(row=13, column=0, columnspan=3, sticky="w", padx=8, pady=(0, 8))
 
 root.mainloop()

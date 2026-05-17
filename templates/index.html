@@ -151,6 +151,7 @@
     <a class="btn primary" href="{{ BASE_PATH }}/add">Add Server</a>
     <a class="btn green" href="{{ BASE_PATH }}/start_all">Start All</a>
     <a class="btn red" href="{{ BASE_PATH }}/stop_all">Stop All</a>
+    <a class="btn" href="{{ BASE_PATH }}/sync_servers">Sync DS Files</a>
   </div>
 </div>
 
@@ -160,6 +161,7 @@
     <a class="btn primary" href="{{ BASE_PATH }}/add">Add Server</a>
     <a class="btn green" href="{{ BASE_PATH }}/start_all">Start All Servers</a>
     <a class="btn red" href="{{ BASE_PATH }}/stop_all">Stop All Servers</a>
+    <a class="btn" href="{{ BASE_PATH }}/sync_servers">Sync Dedicated Server Files</a>
   </div>
 
   {% if servers %}
@@ -195,6 +197,7 @@
             {% endif %}
 
             <a class="btn" href="{{ BASE_PATH }}/server/{{s.id}}/command">Command</a>
+            <a class="btn red" href="{{ BASE_PATH }}/server/{{s.id}}/delete">Delete</a>
           </div>
         </div>
       {% endfor %}

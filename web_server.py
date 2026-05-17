@@ -4,6 +4,9 @@ import sys
 import json
 import shutil
 import subprocess
+import threading
+import time
+from collections import defaultdict
 
 CREATE_NO_WINDOW = 0
 if os.name == "nt":
@@ -35,6 +38,8 @@ app.secret_key = "change-this-secret-key"
 
 SERVERS_DIR = data_path("servers")
 PIDS_FILE = data_path("running_servers.json")
+WATCHDOG_FILE = data_path("watchdog_restarts.json")
+WATCHDOG_THREAD_STARTED = False
 
 
 # ============================================================
@@ -97,6 +102,111 @@ def is_pid_running(pid):
         return str(pid) in out
     except Exception:
         return False
+
+
+def load_restart_log():
+    return load_json_file(WATCHDOG_FILE, {})
+
+
+def save_restart_log(data):
+    with open(WATCHDOG_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
+def start_server_process(server_id, data=None):
+    """Start one EVO server and remember its current PID.
+
+    The presence of the server id inside running_servers.json means:
+    this server was intentionally running and should be restored/watchdogged.
+    """
+    if data is None:
+        data = load_server(server_id)
+
+    command_line = build_start_command(server_id, data)
+
+    proc = subprocess.Popen(
+        command_line,
+        cwd=server_path(server_id),
+        creationflags=CREATE_NO_WINDOW,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL
+    )
+
+    pids = load_pids()
+    pids[server_id] = proc.pid
+    save_pids(pids)
+    return proc.pid
+
+
+def restore_previous_running_servers():
+    """Restart only servers that were previously marked as running.
+
+    If the saved PID is still alive, nothing is done.
+    If the PID is gone, the server is restarted and the new PID replaces the old one.
+    """
+    pids = load_pids()
+    for sid, pid in list(pids.items()):
+        if not os.path.exists(server_config_path(sid)):
+            pids.pop(sid, None)
+            continue
+        if pid and is_pid_running(pid):
+            continue
+        try:
+            data = load_server(sid)
+            new_pid = start_server_process(sid, data)
+            pids[sid] = new_pid
+        except Exception:
+            pass
+    save_pids(pids)
+
+
+def watchdog_loop():
+    while True:
+        cfg = app.config.get("CFG", {})
+        interval = int(cfg.get("watchdog_interval_sec", 30) or 30)
+        max_restarts = int(cfg.get("watchdog_max_restarts", 3) or 3)
+        window_sec = int(cfg.get("watchdog_window_min", 10) or 10) * 60
+        now = time.time()
+
+        if cfg.get("watchdog_enabled"):
+            pids = load_pids()
+            restart_log = load_restart_log()
+
+            for sid, pid in list(pids.items()):
+                if not os.path.exists(server_config_path(sid)):
+                    pids.pop(sid, None)
+                    continue
+
+                if pid and is_pid_running(pid):
+                    continue
+
+                attempts = [t for t in restart_log.get(sid, []) if now - float(t) <= window_sec]
+                if len(attempts) >= max_restarts:
+                    restart_log[sid] = attempts
+                    continue
+
+                try:
+                    data = load_server(sid)
+                    new_pid = start_server_process(sid, data)
+                    pids[sid] = new_pid
+                    attempts.append(now)
+                    restart_log[sid] = attempts
+                except Exception:
+                    pass
+
+            save_pids(pids)
+            save_restart_log(restart_log)
+
+        time.sleep(max(5, interval))
+
+
+def start_watchdog_thread_once():
+    global WATCHDOG_THREAD_STARTED
+    if WATCHDOG_THREAD_STARTED:
+        return
+    WATCHDOG_THREAD_STARTED = True
+    t = threading.Thread(target=watchdog_loop, daemon=True)
+    t.start()
 
 
 # ============================================================
@@ -187,7 +297,7 @@ def create_default_server(server_id, cfg):
             {
                 "car_name": "preset_m4gt3_mech_1",
                 "ballast": 0,
-                "restrictor": 0.0
+                "restrictor": 0
             }
         ],
 
@@ -265,6 +375,12 @@ def run_web(cfg):
     if base_path:
         app.wsgi_app = PrefixMiddleware(app.wsgi_app, base_path)
 
+    if cfg.get("restore_running_on_startup"):
+        restore_previous_running_servers()
+
+    if cfg.get("watchdog_enabled"):
+        start_watchdog_thread_once()
+
     app.run(host=cfg["host"], port=cfg["port"])
 
 
@@ -272,8 +388,16 @@ def run_web(cfg):
 # LOGIN
 # ============================================================
 
+@app.before_request
+def bypass_auth_if_disabled():
+    if app.config.get("CFG", {}).get("disable_auth"):
+        session["ok"] = True
+
+
 @app.route("/", methods=["GET", "POST"])
 def login():
+    if app.config.get("CFG", {}).get("disable_auth"):
+        return redirect(url("/dash"))
     if request.method == "POST":
         if request.form.get("pw") == app.config["CFG"]["password"]:
             session["ok"] = True
@@ -467,8 +591,8 @@ def save_settings(server_id):
     cars = []
 
     for car_name in selected_cars:
-        ballast = float(request.form.get(f"ballast_{car_name}", 0) or 0)
-        restrictor = float(request.form.get(f"restrictor_{car_name}", 0) or 0)
+        ballast = int(float(request.form.get(f"ballast_{car_name}", 0) or 0))
+        restrictor = int(float(request.form.get(f"restrictor_{car_name}", 0) or 0))
 
         cars.append({
             "car_name": car_name,
@@ -553,19 +677,7 @@ def start_server(server_id):
         return redirect(url(f"/server/{server_id}"))
 
     data = load_server(server_id)
-
-    command_line = build_start_command(server_id, data)
-
-    proc = subprocess.Popen(
-        command_line,
-        cwd=server_path(server_id),
-        creationflags=CREATE_NO_WINDOW,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL
-    )
-
-    pids[server_id] = proc.pid
-    save_pids(pids)
+    start_server_process(server_id, data)
 
     if request.args.get("next") == "dash":
         return redirect(url("/dash"))
@@ -602,6 +714,78 @@ def stop_server(server_id):
     return redirect(url(f"/server/{server_id}"))
 
 
+@app.route("/server/<server_id>/delete")
+def delete_server_confirm(server_id):
+    if not session.get("ok"):
+        return redirect(url("/"))
+
+    data = load_server(server_id)
+    return (
+        f"<h2>Delete server: {data.get('name', server_id)}</h2>"
+        "<p>Choose what you want to delete.</p>"
+        f"<p><a href='{url(f'/server/{server_id}/delete/do?mode=config')}'>Delete configuration only</a></p>"
+        f"<p><a href='{url(f'/server/{server_id}/delete/do?mode=folder')}'>Delete entire server folder</a></p>"
+        f"<p><a href='{url('/dash')}'>Cancel</a></p>"
+    )
+
+
+@app.route("/server/<server_id>/delete/do")
+def delete_server_do(server_id):
+    if not session.get("ok"):
+        return redirect(url("/"))
+
+    mode = request.args.get("mode", "config")
+
+    # Stop it first if needed.
+    pids = load_pids()
+    pid = pids.get(server_id)
+    if pid:
+        try:
+            subprocess.run(
+                ["taskkill", "/PID", str(pid), "/F"],
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=CREATE_NO_WINDOW
+            )
+        except Exception:
+            pass
+        pids.pop(server_id, None)
+        save_pids(pids)
+
+    if mode == "folder":
+        shutil.rmtree(server_path(server_id), ignore_errors=True)
+    else:
+        try:
+            os.remove(server_config_path(server_id))
+        except FileNotFoundError:
+            pass
+
+    return redirect(url("/dash"))
+
+
+@app.route("/sync_servers")
+def sync_servers():
+    if not session.get("ok"):
+        return redirect(url("/"))
+
+    src = app.config["CFG"].get("evo_path", "")
+    if not os.path.isdir(src):
+        return "Main EVO Dedicated Server folder is not valid"
+
+    ignore_names = {"server.json", "result", "results", "logs", "__pycache__"}
+
+    def ignore_func(directory, names):
+        return [n for n in names if n in ignore_names]
+
+    for sid in os.listdir(SERVERS_DIR):
+        dst = server_path(sid)
+        if os.path.isdir(dst):
+            shutil.copytree(src, dst, dirs_exist_ok=True, ignore=ignore_func)
+
+    return redirect(url("/dash"))
+
+
 @app.route("/start_all")
 def start_all_servers():
     if not session.get("ok"):
@@ -617,29 +801,9 @@ def start_all_servers():
                 continue
 
             data = load_server(sid)
+            start_server_process(sid, data)
 
-            serverconfig = encode_evo_payload(build_serverconfig(data))
-            seasondefinition = encode_evo_payload(build_seasondefinition(data))
-
-            exe = server_exe_path(sid)
-
-            cmd = [
-                exe,
-                "-serverconfig", serverconfig,
-                "-seasondefinition", seasondefinition
-            ]
-
-            proc = subprocess.Popen(
-                cmd,
-                cwd=server_path(sid),
-                creationflags=CREATE_NO_WINDOW,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
-
-            pids[sid] = proc.pid
-
-    save_pids(pids)
+    # start_server_process already saves the updated PID list.
 
     return redirect(url("/dash"))
 
