@@ -292,6 +292,9 @@
       <label>Max Players:</label>
       <input name="max_players" type="number" value="{{ server.max_players }}">
 
+      <label>Netcode Update Interval:</label>
+      <input name="netcode_update_interval" type="number" value="{{ server.netcode_update_interval|default(55) }}">
+
       <label class="checkbox-line">
         <input name="cycle" type="checkbox" {% if server.cycle %}checked{% endif %}>
         Cycle
@@ -306,11 +309,62 @@
       <label>Admin Password:</label>
       <input name="admin_password" value="{{ server.admin_password }}">
 
+      <label>PI Min:</label>
+      <input name="pi_min" type="number" step="0.1" value="{{ server.pi_min|default(0) }}">
+
+      <label>PI Max:</label>
+      <input name="pi_max" type="number" step="0.1" value="{{ server.pi_max|default(0) }}">
+
+      <label>Tuning:</label>
+      <select name="tuning_type">
+        <option value="TuningAllowed" {% if server.tuning_type|default('TuningAllowed') == 'TuningAllowed' %}selected{% endif %}>Allowed</option>
+        <option value="TuningDenied" {% if server.tuning_type|default('TuningAllowed') == 'TuningDenied' %}selected{% endif %}>Denied</option>
+      </select>
+
       <label>Entry List json path:</label>
       <input name="entry_list_path" value="{{ server.entry_list_path }}">
 
+      <label>Entry List Server URL:</label>
+      <input name="entry_list_server_url" value="{{ server.entry_list_server_url|default('') }}">
+
       <label>Results save folder:</label>
       <input name="results_path" value="{{ server.results_path }}">
+
+      <label>Results POST URL:</label>
+      <input name="results_post_url" value="{{ server.results_post_url|default('') }}">
+
+      <label>Token:</label>
+      <input name="token" value="{{ server.token|default('') }}">
+
+      <div class="actions">
+        <button
+          type="submit"
+          formaction="{{ BASE_PATH }}/server/{{server.id}}/entrylist/download"
+          formmethod="post"
+        >
+          Download remote entry list JSON
+        </button>
+      </div>
+
+      {% if request.args.get('remote_status') == 'downloaded' %}
+        <p class="muted">Remote entry list downloaded and selected as local entry list path.</p>
+      {% elif request.args.get('remote_status') == 'error' %}
+        <p class="muted">Remote entry list download failed: {{ server.remote_entry_list_last_error|default('unknown error') }}</p>
+      {% elif request.args.get('remote_status') == 'missing_url' %}
+        <p class="muted">Add an Entry List Server URL before downloading.</p>
+      {% endif %}
+
+      {% if server.remote_entry_list_path|default('') %}
+        <p class="muted">Last remote entry list: {{ server.remote_entry_list_path }}{% if server.remote_entry_list_last_download|default('') %} at {{ server.remote_entry_list_last_download }}{% endif %}</p>
+      {% endif %}
+
+      <label>Dedicated log file path:</label>
+      <input name="log_file_path" value="{{ server.log_file_path|default(default_log_file_path, true) }}">
+      <p class="muted">If empty, the manager uses: {{ default_log_file_path }}</p>
+
+      <label>Additional dedicated server arguments:</label>
+      <textarea name="extra_arguments" placeholder="Optional. Example: -log_file C:\path\server.log">{{ server.extra_arguments|default('') }}</textarea>
+      <p class="muted">These arguments are appended to the generated command without replacing -serverconfig and -seasondefinition.</p>
 
       <label>Manual Kunos command override:</label>
       <textarea name="custom_command" placeholder="Optional. Paste the command copied from the official Kunos launcher here. You can paste only: -serverconfig ... -seasondefinition ...

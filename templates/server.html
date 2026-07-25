@@ -103,6 +103,43 @@
       background: #843333;
       border-color: #b54848;
     }
+
+    .results {
+      margin-top: 24px;
+      background: #151515;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 14px;
+    }
+
+    .results h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #333;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      color: #aaa;
+      font-weight: normal;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    td a {
+      color: #8bbcff;
+    }
   </style>
 </head>
 
@@ -157,6 +194,34 @@
     <a class="btn" href="{{ BASE_PATH }}/dash">Back</a>
   </div>
 
+  <div class="results">
+    <h2>Result JSON files</h2>
+
+    {% if result_files %}
+      <table>
+        <thead>
+          <tr>
+            <th>File</th>
+            <th>Modified</th>
+            <th>Size</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in result_files[:25] %}
+            <tr>
+              <td>{{ f.name }}</td>
+              <td>{{ f.modified }}</td>
+              <td>{{ f.size }} bytes</td>
+              <td><a href="{{ BASE_PATH }}/server/{{server.id}}/results/{{ f.name|urlencode }}">Download</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="label">No result JSON files found in the server results folder.</div>
+    {% endif %}
+  </div>
 
 </div>
 

@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session, render_template
+from flask import Flask, request, redirect, session, render_template, send_file, abort
 import os
 import sys
 import json
@@ -6,6 +6,9 @@ import shutil
 import subprocess
 import threading
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from collections import defaultdict
 
 CREATE_NO_WINDOW = 0
@@ -235,6 +238,71 @@ def load_json_file(path, default):
         return default
 
 
+def server_result_dir(server_id, data=None):
+    if data is None:
+        data = load_json_file(server_config_path(server_id), {})
+
+    configured = (data.get("results_path") or "").strip()
+    if configured:
+        return os.path.abspath(configured)
+
+    return os.path.abspath(os.path.join(server_path(server_id), "result"))
+
+
+def result_json_files(server_id, data=None):
+    result_dir = server_result_dir(server_id, data)
+    if not os.path.isdir(result_dir):
+        return []
+
+    files = []
+    for name in os.listdir(result_dir):
+        path = os.path.join(result_dir, name)
+        if not os.path.isfile(path) or not name.lower().endswith(".json"):
+            continue
+
+        stat = os.stat(path)
+        files.append({
+            "name": name,
+            "size": stat.st_size,
+            "modified": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(stat.st_mtime))
+        })
+
+    files.sort(key=lambda item: item["modified"], reverse=True)
+    return files
+
+
+def safe_result_json_path(server_id, filename):
+    if os.path.basename(filename) != filename or not filename.lower().endswith(".json"):
+        abort(404)
+
+    result_dir = server_result_dir(server_id)
+    path = os.path.abspath(os.path.join(result_dir, filename))
+
+    if os.path.commonpath([result_dir, path]) != result_dir or not os.path.isfile(path):
+        abort(404)
+
+    return path
+
+
+def quote_command_arg(value):
+    value = str(value or "").strip()
+    if not value:
+        return ""
+    if not any(ch.isspace() for ch in value) and '"' not in value:
+        return value
+    return '"' + value.replace('"', r'\"') + '"'
+
+
+def default_log_file_path(server_id):
+    return os.path.abspath(
+        os.path.join(server_path(server_id), "serverConfig", "Assetto Corsa EVO Server.txt")
+    )
+
+
+def effective_log_file_path(server_id, data):
+    return (data.get("log_file_path") or "").strip() or default_log_file_path(server_id)
+
+
 # ============================================================
 # SERVER CONFIG
 # ============================================================
@@ -267,13 +335,29 @@ def create_default_server(server_id, cfg):
         "http_port": 8080 + num - 1,
         "max_players": 8,
         "cycle": True,
+        "launch_path": "",
+        "netcode_update_interval": 55,
 
         "driver_password": "",
         "spectator_password": "",
         "admin_password": "admin",
 
+        "pi_min": 0,
+        "pi_max": 0,
+        "property_1": [],
+        "property_2": [],
+        "property_3": [],
+        "entry_list_server_url": "",
+        "results_post_url": "",
+        "token": "",
         "entry_list_path": "",
+        "remote_entry_list_path": "",
+        "remote_entry_list_last_download": "",
+        "remote_entry_list_last_error": "",
         "results_path": result_path + "\\",
+        "log_file_path": default_log_file_path(server_id),
+        "extra_arguments": "",
+        "tuning_type": "TuningAllowed",
 
         "type": "MultiplayerServerListSessionType_RANKED",
 
@@ -488,7 +572,7 @@ def server_detail(server_id):
         return redirect(url("/"))
 
     data = load_server(server_id)
-    return render_template("server.html", server=data)
+    return render_template("server.html", server=data, result_files=result_json_files(server_id, data))
 
 
 # ============================================================
@@ -524,7 +608,8 @@ def server_settings(server_id):
         practice_events=practice_events.get("events", []),
         race_events=race_events.get("events", []),
         selected_car_names=selected_car_names,
-        selected_car_map=selected_car_map
+        selected_car_map=selected_car_map,
+        default_log_file_path=default_log_file_path(server_id)
     )
 
 
@@ -542,13 +627,22 @@ def save_settings(server_id):
     data["max_players"] = int(request.form.get("max_players", data.get("max_players", 8)))
 
     data["cycle"] = request.form.get("cycle") == "on"
+    data["netcode_update_interval"] = int(request.form.get("netcode_update_interval", data.get("netcode_update_interval", 55)))
 
     data["driver_password"] = request.form.get("driver_password", "")
     data["spectator_password"] = request.form.get("spectator_password", "")
     data["admin_password"] = request.form.get("admin_password", "")
 
+    data["pi_min"] = float(request.form.get("pi_min", data.get("pi_min", 0)) or 0)
+    data["pi_max"] = float(request.form.get("pi_max", data.get("pi_max", 0)) or 0)
+    data["entry_list_server_url"] = request.form.get("entry_list_server_url", "").strip()
+    data["results_post_url"] = request.form.get("results_post_url", "").strip()
+    data["token"] = request.form.get("token", "").strip()
     data["entry_list_path"] = request.form.get("entry_list_path", "")
     data["results_path"] = request.form.get("results_path", data.get("results_path", ""))
+    data["log_file_path"] = request.form.get("log_file_path", "").strip()
+    data["extra_arguments"] = request.form.get("extra_arguments", "").strip()
+    data["tuning_type"] = request.form.get("tuning_type", data.get("tuning_type", "TuningAllowed"))
     data["custom_command"] = request.form.get("custom_command", "").strip()
 
     data["type"] = request.form.get("type", "MultiplayerServerListSessionType_RANKED")
@@ -607,13 +701,98 @@ def save_settings(server_id):
     return redirect(url(f"/server/{server_id}/settings"))
 
 
+@app.route("/server/<server_id>/entrylist/download", methods=["POST"])
+def download_remote_entrylist(server_id):
+    if not session.get("ok"):
+        return redirect(url("/"))
+
+    data = load_server(server_id)
+    remote_url = request.form.get("entry_list_server_url", data.get("entry_list_server_url", "")).strip()
+    token = request.form.get("token", data.get("token", "")).strip()
+
+    data["entry_list_server_url"] = remote_url
+    data["results_post_url"] = request.form.get("results_post_url", data.get("results_post_url", "")).strip()
+    data["token"] = token
+
+    if not remote_url:
+        data["remote_entry_list_last_error"] = "Entry List Server URL is empty"
+        save_server(server_id, data)
+        return redirect(url(f"/server/{server_id}/settings?remote_status=missing_url"))
+
+    try:
+        parsed_url = urllib.parse.urlparse(remote_url)
+        if parsed_url.scheme not in {"http", "https"}:
+            raise ValueError("Only http:// and https:// URLs are supported")
+
+        req = urllib.request.Request(
+            remote_url,
+            headers={
+                "Accept": "application/json",
+                "User-Agent": "EVO-Web-Server-Manager"
+            }
+        )
+        if token:
+            req.add_header("Authorization", f"Bearer {token}")
+
+        with urllib.request.urlopen(req, timeout=20) as response:
+            raw = response.read(10 * 1024 * 1024)
+
+        parsed = json.loads(raw.decode("utf-8-sig"))
+        entry_path = os.path.abspath(os.path.join(server_path(server_id), "remote_entry_list.json"))
+
+        with open(entry_path, "w", encoding="utf-8") as f:
+            json.dump(parsed, f, indent=2, ensure_ascii=False)
+
+        data["entry_list_path"] = entry_path
+        data["remote_entry_list_path"] = entry_path
+        data["remote_entry_list_last_download"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        data["remote_entry_list_last_error"] = ""
+        save_server(server_id, data)
+
+        return redirect(url(f"/server/{server_id}/settings?remote_status=downloaded"))
+    except (urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+        data["remote_entry_list_last_error"] = str(exc)
+        save_server(server_id, data)
+        return redirect(url(f"/server/{server_id}/settings?remote_status=error"))
+
+
+@app.route("/server/<server_id>/results/<filename>")
+def download_result_json(server_id, filename):
+    if not session.get("ok"):
+        return redirect(url("/"))
+
+    data = load_server(server_id)
+    path = safe_result_json_path(server_id, filename)
+    return send_file(path, as_attachment=True, download_name=os.path.basename(path))
+
+
 
 
 def build_generated_command(server_id, data):
     serverconfig = encode_evo_payload(build_serverconfig(data))
     seasondefinition = encode_evo_payload(build_seasondefinition(data))
     exe = server_exe_path(server_id)
-    return f'"{exe}" -serverconfig {serverconfig} -seasondefinition {seasondefinition}'
+
+    parts = [
+        f'"{exe}"',
+        "-serverconfig",
+        serverconfig,
+        "-seasondefinition",
+        seasondefinition,
+    ]
+
+    log_file_path = effective_log_file_path(server_id, data)
+    if log_file_path:
+        log_dir = os.path.dirname(log_file_path)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        parts.extend(["-log_file", quote_command_arg(log_file_path)])
+
+    extra_arguments = " ".join((data.get("extra_arguments") or "").split())
+    if extra_arguments:
+        parts.append(extra_arguments)
+
+    return " ".join(parts)
 
 
 def build_start_command(server_id, data):

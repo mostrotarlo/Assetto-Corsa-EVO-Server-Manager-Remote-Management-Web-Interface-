@@ -6,15 +6,26 @@ def build_serverconfig(server):
         "server_udp_internal_port": int(server.get("udp_port", 9700)),
         "server_http_port": int(server.get("http_port", 8080)),
         "server_name": server.get("name", "EVO Server"),
-        "max_players": int(server.get("max_players", 8)),
-        "cycle": bool(server.get("cycle", True)),
-        "allowed_cars_list_full": server.get("cars", []),
+        "launch_path": server.get("launch_path", ""),
+        "netcode_update_interval": int(server.get("netcode_update_interval", 55)),
         "driver_password": server.get("driver_password", ""),
         "spectator_password": server.get("spectator_password", ""),
-        "admin_password": server.get("admin_password", ""),
+        "max_players": int(server.get("max_players", 8)),
+        "allowed_cars_list_full": server.get("cars", []),
         "type": server.get("type", "MultiplayerServerListSessionType_RANKED"),
+        "cycle": bool(server.get("cycle", True)),
+        "admin_password": server.get("admin_password", ""),
+        "pi_min": float(server.get("pi_min", 0) or 0),
+        "pi_max": float(server.get("pi_max", 0) or 0),
+        "property_1": server.get("property_1", []),
+        "property_2": server.get("property_2", []),
+        "property_3": server.get("property_3", []),
+        "entry_list_server_url": server.get("entry_list_server_url", ""),
+        "results_post_url": server.get("results_post_url", ""),
+        "token": server.get("token", ""),
         "entry_list_path": server.get("entry_list_path", ""),
-        "results_path": server.get("results_path", "")
+        "results_path": server.get("results_path", ""),
+        "tuning_type": server.get("tuning_type", "TuningAllowed")
     }
 
 
