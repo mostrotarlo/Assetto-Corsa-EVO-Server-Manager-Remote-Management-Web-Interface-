@@ -242,6 +242,11 @@ tk.Button(root, text="Start Web App", command=go, width=22).grid(row=11, column=
 promo_frame = tk.LabelFrame(root, text="WOACC Community & Tools", padx=8, pady=8)
 promo_frame.grid(row=12, column=0, columnspan=3, sticky="we", padx=8, pady=(4, 10))
 
+# When launched from the Windows startup shortcut, start the complete app flow
+# automatically instead of waiting for the user to press the button.
+if cfg.get("start_with_windows"):
+    root.after(300, go)
+
 tk.Label(
     promo_frame,
     text="WOACC EVO Tracker is an optional separate project available for download.",
