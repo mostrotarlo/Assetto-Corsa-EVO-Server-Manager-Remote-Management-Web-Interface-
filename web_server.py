@@ -172,7 +172,7 @@ def watchdog_loop():
     while True:
         cfg = app.config.get("CFG", {})
         interval = int(cfg.get("watchdog_interval_sec", 30) or 30)
-        max_restarts = int(cfg.get("watchdog_max_restarts", 3) or 3)
+        max_restarts = min(2, max(0, int(cfg.get("watchdog_max_restarts", 2) or 2)))
         window_sec = int(cfg.get("watchdog_window_min", 10) or 10) * 60
         now = time.time()
 

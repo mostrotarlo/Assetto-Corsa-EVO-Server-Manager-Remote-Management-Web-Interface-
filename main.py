@@ -18,7 +18,7 @@ def app_dir() -> str:
 BASE_DIR = app_dir()
 os.chdir(BASE_DIR)
 
-APP_VERSION = "v1.4.2"
+APP_VERSION = "v1.4.3"
 
 WOACC_URL = "https://woacc.zapto.org/"
 WOACC_TRACKER_URL = "https://woacc.zapto.org/tracker/"
@@ -39,7 +39,7 @@ DEFAULT_CFG = {
     "restore_running_on_startup": False,
     "watchdog_enabled": False,
     "watchdog_interval_sec": 30,
-    "watchdog_max_restarts": 3,
+    "watchdog_max_restarts": 2,
     "watchdog_window_min": 10,
     "start_with_windows": False
 }
