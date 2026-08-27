@@ -74,12 +74,16 @@ def build_seasondefinition(server):
             "max_waiting_for_players": int(server.get("max_waiting_for_players", 30)),
         })
 
-        if server.get("mandatory_pitstop", False):
-            game_config["mandatory_pit_stop"] = {
-                "requires_tyre_change": bool(server.get("mandatory_pitstop_tyre_change", False)),
-                "requires_refuelling": bool(server.get("mandatory_pitstop_refuel", False)),
-                "pit_window": int(server.get("pit_window_time", 600)),
-            }
+        mandatory_pitstop_allowed = (
+            server.get("race_duration_type", "GameModeSelectionDuration_TIME")
+            == "GameModeSelectionDuration_TIME"
+            and int(server.get("race_length", 300)) > 1200
+        )
+        if server.get("mandatory_pitstop", False) and mandatory_pitstop_allowed:
+            game_config["mandatory_pit_stop"] = True
+            game_config["requires_tyre_change"] = bool(server.get("mandatory_pitstop_tyre_change", False))
+            game_config["requires_refuelling"] = bool(server.get("mandatory_pitstop_refuel", False))
+            game_config["pit_window"] = int(server.get("pit_window_time", 600))
 
     return {
         "game_type": game_type,

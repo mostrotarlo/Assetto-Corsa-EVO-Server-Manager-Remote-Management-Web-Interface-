@@ -759,9 +759,13 @@ def save_settings(server_id):
     data["race_duration_type"] = request.form.get("race_duration_type", data.get("race_duration_type", "GameModeSelectionDuration_TIME"))
     data["min_waiting_for_players"] = int(request.form.get("min_waiting_for_players", data.get("min_waiting_for_players", 10)))
     data["max_waiting_for_players"] = int(request.form.get("max_waiting_for_players", data.get("max_waiting_for_players", 30)))
-    data["mandatory_pitstop"] = request.form.get("mandatory_pitstop") == "on"
-    data["mandatory_pitstop_refuel"] = request.form.get("mandatory_pitstop_refuel") == "on"
-    data["mandatory_pitstop_tyre_change"] = request.form.get("mandatory_pitstop_tyre_change") == "on"
+    mandatory_pitstop_allowed = (
+        data["race_duration_type"] == "GameModeSelectionDuration_TIME"
+        and data["race_length"] > 1200
+    )
+    data["mandatory_pitstop"] = mandatory_pitstop_allowed and request.form.get("mandatory_pitstop") == "on"
+    data["mandatory_pitstop_refuel"] = data["mandatory_pitstop"] and request.form.get("mandatory_pitstop_refuel") == "on"
+    data["mandatory_pitstop_tyre_change"] = data["mandatory_pitstop"] and request.form.get("mandatory_pitstop_tyre_change") == "on"
     data["pit_window_time"] = int(request.form.get("pit_window_time", data.get("pit_window_time", 600)) or 600)
 
     selected_cars = request.form.getlist("selected_cars")

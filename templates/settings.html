@@ -619,9 +619,9 @@ or the full command including AssettoCorsaEVOServer.exe. If empty, this manager 
         <div class="session-box">
           <h2>Race:</h2>
           <label>Duration [sec]:</label>
-          <input name="race_length" type="number" value="{{ server.race_length|default(300) }}">
+          <input id="raceLength" name="race_length" type="number" min="1" value="{{ server.race_length|default(300) }}">
           <label>Duration Type:</label>
-          <select name="race_duration_type">
+          <select id="raceDurationType" name="race_duration_type">
             <option value="GameModeSelectionDuration_TIME" {% if server.race_duration_type|default('GameModeSelectionDuration_TIME') == 'GameModeSelectionDuration_TIME' %}selected{% endif %}>Time</option>
             <option value="GameModeSelectionDuration_LAPS" {% if server.race_duration_type|default('GameModeSelectionDuration_TIME') == 'GameModeSelectionDuration_LAPS' %}selected{% endif %}>Laps</option>
           </select>
@@ -636,11 +636,12 @@ or the full command including AssettoCorsaEVOServer.exe. If empty, this manager 
           <label>Overtime wait next session [sec]:</label>
           <input name="race_overtime" type="number" value="{{ server.race_overtime|default(10) }}">
           <h3>Mandatory pitstop</h3>
-          <label class="checkbox-line"><input name="mandatory_pitstop" type="checkbox" {% if server.mandatory_pitstop|default(false) %}checked{% endif %}> Enable mandatory pitstop</label>
-          <label class="checkbox-line"><input name="mandatory_pitstop_refuel" type="checkbox" {% if server.mandatory_pitstop_refuel|default(false) %}checked{% endif %}> Refuelling required</label>
-          <label class="checkbox-line"><input name="mandatory_pitstop_tyre_change" type="checkbox" {% if server.mandatory_pitstop_tyre_change|default(false) %}checked{% endif %}> Tyre change required</label>
+          <p id="mandatoryPitstopHint" class="muted">Available only for timed races longer than 20 minutes (more than 1200 seconds).</p>
+          <label class="checkbox-line"><input id="mandatoryPitstop" name="mandatory_pitstop" type="checkbox" {% if server.mandatory_pitstop|default(false) %}checked{% endif %}> Enable mandatory pitstop</label>
+          <label class="checkbox-line"><input class="mandatory-pitstop-option" name="mandatory_pitstop_refuel" type="checkbox" {% if server.mandatory_pitstop_refuel|default(false) %}checked{% endif %}> Refuelling required</label>
+          <label class="checkbox-line"><input class="mandatory-pitstop-option" name="mandatory_pitstop_tyre_change" type="checkbox" {% if server.mandatory_pitstop_tyre_change|default(false) %}checked{% endif %}> Tyre change required</label>
           <label>Pit window time [sec]:</label>
-          <input name="pit_window_time" type="number" min="0" value="{{ server.pit_window_time|default(600) }}">
+          <input class="mandatory-pitstop-option" name="pit_window_time" type="number" min="0" value="{{ server.pit_window_time|default(600) }}">
           <div class="row">
             <div>
               <label>Min waiting players [sec]:</label>
@@ -756,6 +757,30 @@ or the full command including AssettoCorsaEVOServer.exe. If empty, this manager 
 
   document.getElementById("gameType").addEventListener("change", updateSessionVisibility);
   updateSessionVisibility();
+
+  const raceLength = document.getElementById("raceLength");
+  const raceDurationType = document.getElementById("raceDurationType");
+  const mandatoryPitstop = document.getElementById("mandatoryPitstop");
+  const mandatoryPitstopHint = document.getElementById("mandatoryPitstopHint");
+  const mandatoryPitstopOptions = Array.from(document.querySelectorAll(".mandatory-pitstop-option"));
+
+  function updateMandatoryPitstopAvailability() {
+    const allowed = raceDurationType.value === "GameModeSelectionDuration_TIME"
+      && Number(raceLength.value || 0) > 1200;
+
+    mandatoryPitstop.disabled = !allowed;
+    mandatoryPitstopHint.style.color = allowed ? "" : "#ffb454";
+    if (!allowed) mandatoryPitstop.checked = false;
+
+    mandatoryPitstopOptions.forEach(input => {
+      input.disabled = !allowed || !mandatoryPitstop.checked;
+    });
+  }
+
+  raceLength.addEventListener("input", updateMandatoryPitstopAvailability);
+  raceDurationType.addEventListener("change", updateMandatoryPitstopAvailability);
+  mandatoryPitstop.addEventListener("change", updateMandatoryPitstopAvailability);
+  updateMandatoryPitstopAvailability();
 </script>
 
 </body>
