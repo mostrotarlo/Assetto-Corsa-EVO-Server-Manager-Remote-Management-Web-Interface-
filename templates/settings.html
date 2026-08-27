@@ -635,6 +635,12 @@ or the full command including AssettoCorsaEVOServer.exe. If empty, this manager 
           <input name="race_max_wait_to_box" type="number" value="{{ server.race_max_wait_to_box|default(10) }}">
           <label>Overtime wait next session [sec]:</label>
           <input name="race_overtime" type="number" value="{{ server.race_overtime|default(10) }}">
+          <h3>Mandatory pitstop</h3>
+          <label class="checkbox-line"><input name="mandatory_pitstop" type="checkbox" {% if server.mandatory_pitstop|default(false) %}checked{% endif %}> Enable mandatory pitstop</label>
+          <label class="checkbox-line"><input name="mandatory_pitstop_refuel" type="checkbox" {% if server.mandatory_pitstop_refuel|default(false) %}checked{% endif %}> Refuelling required</label>
+          <label class="checkbox-line"><input name="mandatory_pitstop_tyre_change" type="checkbox" {% if server.mandatory_pitstop_tyre_change|default(false) %}checked{% endif %}> Tyre change required</label>
+          <label>Pit window time [sec]:</label>
+          <input name="pit_window_time" type="number" min="0" value="{{ server.pit_window_time|default(600) }}">
           <div class="row">
             <div>
               <label>Min waiting players [sec]:</label>

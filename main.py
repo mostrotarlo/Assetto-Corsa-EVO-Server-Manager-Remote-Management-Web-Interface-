@@ -18,13 +18,13 @@ def app_dir() -> str:
 BASE_DIR = app_dir()
 os.chdir(BASE_DIR)
 
-APP_VERSION = "v1.4.0"
+APP_VERSION = "v1.4.2"
 
 WOACC_URL = "https://woacc.zapto.org/"
 WOACC_TRACKER_URL = "https://woacc.zapto.org/tracker/"
 WOACC_TRACKER_GITHUB_URL = "https://github.com/mostrotarlo/woacc-evo-tracker"
 
-from web_server import run_web  # noqa: E402
+from web_server import run_web, stop_web  # noqa: E402
 
 CFG = os.path.join(BASE_DIR, "app_config.json")
 
@@ -122,7 +122,7 @@ def start_app(cfg):
         )
         return
 
-    server_thread = threading.Thread(target=run_web, args=(cfg,), daemon=True)
+    server_thread = threading.Thread(target=run_web, args=(cfg,), daemon=False)
     server_thread.start()
 
     local_url = f"http://127.0.0.1:{cfg['port']}{cfg.get('base_path', '') or ''}/"
@@ -237,6 +237,23 @@ def go():
 
 
 tk.Button(root, text="Start Web App", command=go, width=22).grid(row=11, column=1, pady=12)
+
+
+def close_app():
+    """Close the embedded web service cleanly, leaving EVO servers running."""
+    global server_thread
+
+    status_var.set("Stopping web app...")
+    root.update_idletasks()
+    stop_web()
+
+    if server_thread and server_thread.is_alive():
+        server_thread.join(timeout=5)
+
+    root.destroy()
+
+
+root.protocol("WM_DELETE_WINDOW", close_app)
 
 # WOACC promotion area
 promo_frame = tk.LabelFrame(root, text="WOACC Community & Tools", padx=8, pady=8)

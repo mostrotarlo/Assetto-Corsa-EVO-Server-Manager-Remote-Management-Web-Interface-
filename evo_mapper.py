@@ -71,7 +71,11 @@ def build_seasondefinition(server):
             "race_overtime_waiting_next_session": int(server.get("race_overtime", 10)),
             "race_max_wait_to_box": int(server.get("race_max_wait_to_box", 10)),
             "min_waiting_for_players": int(server.get("min_waiting_for_players", 10)),
-            "max_waiting_for_players": int(server.get("max_waiting_for_players", 30))
+            "max_waiting_for_players": int(server.get("max_waiting_for_players", 30)),
+            "mandatory_pitstop": bool(server.get("mandatory_pitstop", False)),
+            "mandatory_pitstop_refuel": bool(server.get("mandatory_pitstop_refuel", False)),
+            "mandatory_pitstop_tyre_change": bool(server.get("mandatory_pitstop_tyre_change", False)),
+            "pit_window_time": int(server.get("pit_window_time", 600)),
         })
 
     return {

@@ -6,10 +6,12 @@ import shutil
 import subprocess
 import threading
 import time
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
 from collections import defaultdict
+from werkzeug.serving import make_server
 
 CREATE_NO_WINDOW = 0
 if os.name == "nt":
@@ -43,6 +45,9 @@ SERVERS_DIR = data_path("servers")
 PIDS_FILE = data_path("running_servers.json")
 WATCHDOG_FILE = data_path("watchdog_restarts.json")
 WATCHDOG_THREAD_STARTED = False
+WEB_SERVER = None
+WEB_SERVER_LOCK = threading.Lock()
+WEB_STOP_REQUESTED = False
 
 
 # ============================================================
@@ -303,6 +308,11 @@ def effective_log_file_path(server_id, data):
     return (data.get("log_file_path") or "").strip() or default_log_file_path(server_id)
 
 
+def server_number(server_id):
+    match = re.search(r"(\d+)$", str(server_id or ""))
+    return int(match.group(1)) if match else 10**9
+
+
 # ============================================================
 # SERVER CONFIG
 # ============================================================
@@ -416,6 +426,11 @@ def create_default_server(server_id, cfg):
         "min_waiting_for_players": 10,
         "max_waiting_for_players": 30,
 
+        "mandatory_pitstop": False,
+        "mandatory_pitstop_refuel": False,
+        "mandatory_pitstop_tyre_change": False,
+        "pit_window_time": 600,
+
         # Optional full command copied from the official Kunos launcher.
         # If empty, the manager generates -serverconfig and -seasondefinition normally.
         "custom_command": ""
@@ -427,6 +442,7 @@ def create_default_server(server_id, cfg):
 # ============================================================
 
 def run_web(cfg):
+    global WEB_SERVER, WEB_STOP_REQUESTED
     os.makedirs(SERVERS_DIR, exist_ok=True)
 
     base_path = cfg.get("base_path", "").rstrip("/")
@@ -465,7 +481,30 @@ def run_web(cfg):
     if cfg.get("watchdog_enabled"):
         start_watchdog_thread_once()
 
-    app.run(host=cfg["host"], port=cfg["port"])
+    http_server = make_server(cfg["host"], cfg["port"], app, threaded=True)
+    with WEB_SERVER_LOCK:
+        WEB_SERVER = http_server
+        stop_requested = WEB_STOP_REQUESTED
+
+    try:
+        if not stop_requested:
+            http_server.serve_forever()
+    finally:
+        http_server.server_close()
+        with WEB_SERVER_LOCK:
+            if WEB_SERVER is http_server:
+                WEB_SERVER = None
+
+
+def stop_web():
+    """Stop the embedded web server without touching dedicated servers."""
+    global WEB_STOP_REQUESTED
+    with WEB_SERVER_LOCK:
+        WEB_STOP_REQUESTED = True
+        http_server = WEB_SERVER
+
+    if http_server is not None:
+        http_server.shutdown()
 
 
 # ============================================================
@@ -502,7 +541,7 @@ def dash():
     pids = load_pids()
     servers = []
 
-    for sid in os.listdir(SERVERS_DIR):
+    for sid in sorted(os.listdir(SERVERS_DIR), key=server_number):
         spath = server_path(sid)
 
         if not os.path.isdir(spath):
@@ -531,6 +570,46 @@ def dash():
 # ============================================================
 # ADD SERVER
 # ============================================================
+
+@app.route("/server/<server_id>/clone")
+def clone_server(server_id):
+    if not session.get("ok"):
+        return redirect(url("/"))
+
+    source_path = server_path(server_id)
+    source_config = server_config_path(server_id)
+    if not os.path.isdir(source_path) or not os.path.exists(source_config):
+        return "Source server not found", 404
+
+    i = 1
+    while os.path.exists(server_path(f"server_{i}")):
+        i += 1
+    new_id = f"server_{i}"
+    destination = server_path(new_id)
+    shutil.copytree(source_path, destination)
+
+    data = load_server(server_id)
+    data["id"] = new_id
+    data["name"] = f"{data.get('name', server_id)} (Copy)"
+    data["tcp_port"] = 9700 + i - 1
+    data["udp_port"] = 9700 + i - 1
+    data["http_port"] = 8080 + i - 1
+    result_path = os.path.abspath(os.path.join(destination, "result"))
+    data["results_path"] = result_path + "\\"
+    data["log_file_path"] = default_log_file_path(new_id)
+    data["custom_command"] = ""
+    data["remote_entry_list_last_download"] = ""
+    data["remote_entry_list_last_error"] = ""
+    save_server(new_id, data)
+
+    for entry in os.listdir(result_path):
+        entry_path = os.path.join(result_path, entry)
+        if os.path.isfile(entry_path) or os.path.islink(entry_path):
+            os.remove(entry_path)
+        elif os.path.isdir(entry_path):
+            shutil.rmtree(entry_path)
+
+    return redirect(url("/dash"))
 
 @app.route("/add")
 def add():
@@ -680,6 +759,10 @@ def save_settings(server_id):
     data["race_duration_type"] = request.form.get("race_duration_type", data.get("race_duration_type", "GameModeSelectionDuration_TIME"))
     data["min_waiting_for_players"] = int(request.form.get("min_waiting_for_players", data.get("min_waiting_for_players", 10)))
     data["max_waiting_for_players"] = int(request.form.get("max_waiting_for_players", data.get("max_waiting_for_players", 30)))
+    data["mandatory_pitstop"] = request.form.get("mandatory_pitstop") == "on"
+    data["mandatory_pitstop_refuel"] = request.form.get("mandatory_pitstop_refuel") == "on"
+    data["mandatory_pitstop_tyre_change"] = request.form.get("mandatory_pitstop_tyre_change") == "on"
+    data["pit_window_time"] = int(request.form.get("pit_window_time", data.get("pit_window_time", 600)) or 600)
 
     selected_cars = request.form.getlist("selected_cars")
     cars = []
