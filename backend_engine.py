@@ -12,15 +12,15 @@ import signal
 import subprocess
 import sys
 
-from config_store import APP_VERSION, app_dir, load_config
+from config_store import APP_VERSION, app_dir, load_config, runtime_dir
 from web_server import run_web, stop_web
 
 
 SERVICE_NAME = "EvoWebServerManager"
 SERVICE_DISPLAY_NAME = "EVO Web Server Manager Engine"
 SERVICE_DESCRIPTION = "Runs the EVO web interface, watchdog and dedicated servers."
-PID_FILE = os.path.join(app_dir(), "engine.pid")
-LOG_FILE = os.path.join(app_dir(), "engine.log")
+PID_FILE = os.path.join(runtime_dir(), "engine.pid")
+LOG_FILE = os.path.join(runtime_dir(), "engine.log")
 
 
 def configure_logging() -> None:

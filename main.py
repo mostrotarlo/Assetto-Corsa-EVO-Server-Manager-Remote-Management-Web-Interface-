@@ -15,13 +15,13 @@ import tkinter as tk
 import webbrowser
 from tkinter import filedialog, messagebox
 
-from config_store import APP_VERSION, app_dir, load_config, save_config
+from config_store import APP_VERSION, app_dir, load_config, runtime_dir, save_config
 
 
 BASE_DIR = app_dir()
 SERVICE_NAME = "EvoWebServerManager"
 ENGINE_EXE_NAME = "EVO Web Server Manager Engine.exe"
-PID_FILE = os.path.join(BASE_DIR, "engine.pid")
+PID_FILE = os.path.join(runtime_dir(), "engine.pid")
 
 WOACC_URL = "https://woacc.zapto.org/"
 WOACC_TRACKER_URL = "https://woacc.zapto.org/tracker/"

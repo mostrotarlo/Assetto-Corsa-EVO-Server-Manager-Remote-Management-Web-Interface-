@@ -39,6 +39,14 @@ def config_path() -> str:
     return os.path.join(app_dir(), CONFIG_NAME)
 
 
+def runtime_dir() -> str:
+    """Return a user-writable folder for logs and transient process state."""
+    base = os.environ.get("LOCALAPPDATA") or app_dir()
+    path = os.path.join(base, "EVO Web Server Manager")
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
 def load_config() -> dict:
     data = {}
     path = config_path()
