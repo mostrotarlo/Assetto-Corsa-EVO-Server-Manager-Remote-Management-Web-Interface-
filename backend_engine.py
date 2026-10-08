@@ -139,6 +139,16 @@ def service_command() -> int:
         subprocess.run([sys.executable, "stop"], check=False)
         return subprocess.run([sys.executable, "start"], check=False).returncode
 
+    # The Service Control Manager launches the installed executable without
+    # command-line arguments.  A frozen one-file executable must explicitly
+    # connect to the dispatcher; HandleCommandLine is only for install/start/
+    # stop commands entered by the user.
+    if len(sys.argv) == 1 and getattr(sys, "frozen", False):
+        servicemanager.Initialize()
+        servicemanager.PrepareToHostSingle(EvoManagerService)
+        servicemanager.StartServiceCtrlDispatcher()
+        return 0
+
     win32serviceutil.HandleCommandLine(EvoManagerService)
     return 0
 
