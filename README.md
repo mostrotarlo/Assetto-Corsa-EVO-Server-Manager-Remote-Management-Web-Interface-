@@ -2,7 +2,7 @@
 
 A simple and powerful web interface to manage **Assetto Corsa EVO Dedicated Servers**.
 
-## Version 1.5.0 architecture preview
+## Version 1.5.0
 
 This experimental branch separates the application into two programs that must
 remain in the same folder:
@@ -26,6 +26,13 @@ and service controls; it never starts a duplicate Engine instance.
 Keep the application in a permanent writable folder before installing the
 service. Moving or renaming the Engine executable afterwards will break the
 registered service path.
+
+### Update from v1.4.x
+
+Run `EVO Web Server Manager v1.5.0 Installer.exe`, select the folder containing
+the previous version and confirm the migration. The installer preserves
+`app_config.json`, `servers`, logs and results; it copies the new Control Panel,
+Engine and PDF manual, then removes only recognized legacy v1.4 executables.
 
 👉 No configuration needed  
 👉 Just run the `.exe` and start your server  

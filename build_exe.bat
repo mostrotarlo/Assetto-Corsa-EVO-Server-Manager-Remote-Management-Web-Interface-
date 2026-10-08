@@ -8,6 +8,7 @@ if exist ".build-venv\Scripts\python.exe" set "PYTHON=.build-venv\Scripts\python
 "%PYTHON%" -m pip install --upgrade pip
 "%PYTHON%" -m pip install -r requirements.txt
 "%PYTHON%" -m pip install pyinstaller
+"%PYTHON%" -m pip install reportlab
 
 set "OUT=dist\EVO-Web-Server-Manager-v1.5.0"
 if exist "%OUT%" rmdir /s /q "%OUT%"
@@ -38,6 +39,22 @@ if errorlevel 1 goto :failed
   --hidden-import win32serviceutil ^
   --hidden-import win32event ^
   backend_engine.py
+if errorlevel 1 goto :failed
+
+"%PYTHON%" build_manual.py
+if errorlevel 1 goto :failed
+
+"%PYTHON%" -m PyInstaller ^
+  --noconfirm ^
+  --clean ^
+  --onefile ^
+  --windowed ^
+  --name "EVO Web Server Manager v1.5.0 Installer" ^
+  --distpath "%OUT%" ^
+  --add-data "%OUT%\EVO Web Server Manager Control Panel.exe;payload" ^
+  --add-data "%OUT%\EVO Web Server Manager Engine.exe;payload" ^
+  --add-data "%OUT%\EVO Web Server Manager Manual.pdf;payload" ^
+  installer.py
 if errorlevel 1 goto :failed
 
 copy /y "app_config.example.json" "%OUT%\app_config.example.json" >nul
