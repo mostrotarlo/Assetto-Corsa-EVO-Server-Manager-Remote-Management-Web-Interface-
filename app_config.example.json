@@ -4,5 +4,13 @@
   "host": "0.0.0.0",
   "port": 5000,
   "base_path": "",
-  "public_url": ""
+  "public_url": "",
+  "disable_auth": false,
+  "restore_running_on_startup": false,
+  "watchdog_enabled": false,
+  "watchdog_interval_sec": 30,
+  "watchdog_max_restarts": 2,
+  "watchdog_window_min": 10,
+  "start_with_windows": false,
+  "run_as_windows_service": false
 }

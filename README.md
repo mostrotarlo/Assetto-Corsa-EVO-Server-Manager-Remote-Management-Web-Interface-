@@ -2,6 +2,31 @@
 
 A simple and powerful web interface to manage **Assetto Corsa EVO Dedicated Servers**.
 
+## Version 1.5.0 architecture preview
+
+This experimental branch separates the application into two programs that must
+remain in the same folder:
+
+- `EVO Web Server Manager Control Panel.exe` contains the Windows configuration
+  interface. Closing it does not stop the web interface or dedicated servers.
+- `EVO Web Server Manager Engine.exe` runs the web interface, watchdog and
+  dedicated-server management without a desktop window.
+
+The Control Panel offers three operating modes:
+
+1. Direct: press **Start / Restart Engine** when needed.
+2. Start after user sign-in: Engine starts automatically through the user's
+   Windows Startup shortcut.
+3. Windows service: only Engine starts during system boot, before any user signs
+   in. Enabling or removing this mode requires Windows administrator approval.
+
+Opening Control Panel while Engine is already running only displays the settings
+and service controls; it never starts a duplicate Engine instance.
+
+Keep the application in a permanent writable folder before installing the
+service. Moving or renaming the Engine executable afterwards will break the
+registered service path.
+
 👉 No configuration needed  
 👉 Just run the `.exe` and start your server  
 
